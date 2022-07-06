@@ -1,5 +1,6 @@
-# Project place file
-/TarkovProject.rbxlx
+# All place files
+/*.rbxl
+/*.rbxlx
 
 # Roblox Studio lock files
 /*.rbxlx.lock

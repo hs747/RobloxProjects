@@ -2,7 +2,7 @@
 -- product of waffle's magnificent brain at 1:00 am
 
 local RunService = game:GetService("RunService")
-local Signal = require(game.ReplicatedStorage.Source.Shared.Lib.Signal)
+local Signal = require(game.ReplicatedStorage.Source.Shared.Signal)
 
 local NETWORK_FOLDER_NAME = "Network"
 local NETWORK_FOLDER_PARENT = game.ReplicatedStorage

@@ -2,7 +2,6 @@
 type Item = {
 	id: string, -- unique to the inventory for the item
 	container: string,
-	isContainer: boolean,
 	x: number, -- grid x pos of item (top right)
 	y: number, -- grid y pos
 }
@@ -10,7 +9,11 @@ type Item = {
 type ClientItem = Item & {
 	_containerIndex: number
 }
---
+
+-- dependencies
+local InventoryContainer = require(game.ReplicatedStorage.Source.Client.Classes.InventoryContainer)
+
+-- the class
 local inventory = {}
 inventory.__index = inventory
 
@@ -21,51 +24,50 @@ end
 function inventory.new(networkGroup)
 	local self = setmetatable({}, inventory)
 	self.items = {}
+	self.slots = {}
 	self.containers = {}
-	
-	self.getRemote = networkGroup:WaitForChild("Get")
-	self.addedRemote = networkGroup:WaitForChild("Added")
-	self.removedRemote = networkGroup:WaitForChild("Removed")
 	return self	
 end
 
--- fetch all data from the server about this inventory
-function inventory:networkGet()
-	local data = self.getRemote:InvokeServer()
-	self.containers = {}
-	for _, containerId in ipairs(data) do
-		self.containers[containerId] = {}
-	end
-	self.items = {}
-	for _, item: Item in ipairs(data) do
-		self.items[item.id] = item
-		local container = self.containers[item.container]
-		if not container then
-			container = {}
-			self.containers[item.container] = container
-		end
-		table.insert(container, item) -- can do o(n) remove later
-	end
-end
+-- network event callbacks
 
--- listen for updates about this inventory
-function inventory:networkListen()
-	
+function inventory:_onSet(data)
+	for _, containerId in ipairs(data[2]) do
+		self.containers[containerId] = InventoryContainer.new()
+	end
+
+	for _, slotId in ipairs(data[3]) do
+		self.slots[slotId] = nil
+	end
+
+	for _, item in ipairs(data[1]) do
+		self:_onAdded({
+			id = item[1],
+			x = item[2],
+			y = item[3],
+			container = item[4],
+		})
+	end
 end
 
 function inventory:_onAdded(item: Item)
 	self.items[item.id] = item
-	table.insert(self.containers[item.container], item)
-	if isContainer(item) then
-		self.containers[item.id] = {}
+	if item.container then
+		local container = self.containers[item.container]
+		container:add(item)
+	elseif item.slot then
+		self.slots[item.slot] = item
 	end
 end
 
 function inventory:_onRemoved(item: Item)
 	self.items[item.id] = nil
-	-- remove from container
-	if isContainer(item) then
-		self.containers[item.id] = {}
+	-- remove item from container/slot
+	if item.container then
+		local container = self.containers[item.container]
+		container:remove(item)
+	elseif item.slot then
+		self.slots[item.slot] = nil
 	end
 end
 

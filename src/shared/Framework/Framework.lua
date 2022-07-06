@@ -1,6 +1,7 @@
 local framework = {}
 
 local moduleHash = {}
+local moduleList = {}
 
 local function callModuleMethod(module: {[any]: any}, methodName: string, ...)
 	local method = module[methodName]
@@ -20,6 +21,7 @@ function framework:addModule(moduleScript: ModuleScript)
 		error(string.format("\nFramework: Error requiring module [%s]. Error:\n%s", moduleScript.Name, ret))
 	end
 	moduleHash[moduleScript] = ret
+	table.insert(moduleList, ret)
 end
 
 -- adds all module scripts that are children of the given instance
@@ -31,12 +33,19 @@ function framework:addContainer(instance: Instance)
 	end
 end
 
+-- calls all modules with the init and start methods
 function framework:run()
 	for _, module in pairs(moduleHash) do
 		callModuleMethod(module, "init")
 	end
 	for _, module in pairs(moduleHash) do
 		callModuleMethod(module, "start")
+	end
+end
+
+function framework:call(methodName, ...)
+	for _, module in ipairs(moduleList) do
+		callModuleMethod(module, methodName, ...)
 	end
 end
 

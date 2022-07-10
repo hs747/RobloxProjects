@@ -2,6 +2,9 @@
 /*.rbxl
 /*.rbxlx
 
+# Non-script assets
+/art
+
 # Roblox Studio lock files
 /*.rbxlx.lock
 /*.rbxl.lock

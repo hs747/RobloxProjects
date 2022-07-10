@@ -41,4 +41,13 @@ function Array2D.get<T>(array: Array2D<T>, sizeX, sizeY, x, y)
     return array[sizeY * (y - 1) + x]
 end
 
+-- most complicated algorithm in the world right here
+function Array2D.rotateDimension(x, y, r)
+    if r == 0 then
+        return x, y
+    else
+        return y, x
+    end
+end
+
 return Array2D

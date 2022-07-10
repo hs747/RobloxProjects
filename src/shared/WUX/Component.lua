@@ -22,8 +22,8 @@ return function(constructor)
 	tab.__index = tab
 	setmetatable(tab, {
 		__index = Component,
-		__call = function(...) 
-			local self = setmetatable({}, tab)
+		__call = function(t, ...) 
+			local self = setmetatable({}, t)
 			return constructor(self, ...)
 		end
 	})	

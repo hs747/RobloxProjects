@@ -19,3 +19,5 @@ end
 function interfaceController:init()
 	interfaceController.screenGui = mainScreenGui()
 end
+
+return interfaceController

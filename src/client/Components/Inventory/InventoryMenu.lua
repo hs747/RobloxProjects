@@ -2,77 +2,30 @@ local inventoryMenu = {}
 
 -- dependencies
 local WUX = require(game.ReplicatedStorage.Source.Shared.WUX)
+local Container = require(game.ReplicatedStorage.Source.Client.Components.Inventory.Container)
+local Item = require(game.ReplicatedStorage.Source.Client.Components.Inventory.Item)
 
 -- private
-local GRID_PIXEL_SIZE = 20
 local GRID_SECTION_PADDING = 10
-local CONTAINER_HEADER_PIXEL_SIZE = 10
 
-local function container(containerSection, gridWidth, gridHeight)
-	local frame = WUX.New "Frame" {
-		Size = UDim2.new(0, GRID_PIXEL_SIZE * gridWidth, 0, CONTAINER_HEADER_PIXEL_SIZE + GRID_PIXEL_SIZE * gridHeight),
-		BackgroundTransparency = 1,
-	}
-
-	local header = WUX.New "Frame" {
-		Parent = frame,
-		Size = UDim2.new(1, 0, 0, CONTAINER_HEADER_PIXEL_SIZE),
-		Position = UDim2.new(0, 0, 0, 0),
-		ZIndex = 10,
-		BorderSizePixel = 0,
-		BackgroundColor3 = Color3.fromRGB(14, 14, 14),
-		[WUX.Children] = {
-			WUX.New "TextLabel" {
-				AnchorPoint = Vector2.new(0.5, 0.5),
-				Position = UDim2.new(0.5, 0, 0.5, 0),
-				Size = UDim2.new(0.9, 0, 0.8, 0),
-				BackgroundTransparency = 1,
-
-				Font = Enum.Font.FredokaOne,
-				TextColor3 = Color3.fromRGB(214, 214, 214),
-				TextScaled = true,
-				Text = "Container",
-			}
-		}
-	}
-
-	for x = 1, gridWidth - 1 do
-		WUX.New "Frame" {
-			Parent = frame,
-			Size = UDim2.new(0, 1, 1, 0),
-			Position = UDim2.new(0, GRID_PIXEL_SIZE * x, 0, 0),
-			ZIndex = 5,
-			BorderSizePixel = 0,
-			BackgroundColor3 = Color3.fromRGB(185, 185, 185),
-		}
-	end
-
-	for y = 1, gridHeight - 1 do
-		WUX.New "Frame" {
-			Parent = frame,
-			Size = UDim2.new(1, 0, 0, 1),
-			Position = UDim2.new(0, 0, 0, CONTAINER_HEADER_PIXEL_SIZE + GRID_PIXEL_SIZE * y),
-			ZIndex = 5,
-			BorderSizePixel = 0,
-			BackgroundColor3 = Color3.fromRGB(185, 185, 185),
-		}
-	end
-
-	frame.Parent = containerSection
-	return frame
-end
-
-local function containerSection(parent, cornerPosition, gridWidth) 
+local function containerSection(parent, anchorPoint, position, size) 
 	return WUX.New "Frame" {
 		Parent = parent,
-		Position = cornerPosition,
-		Size = UDim2.new(0, GRID_PIXEL_SIZE * gridWidth + GRID_SECTION_PADDING * 2, 1, 0),
+		AnchorPoint = anchorPoint,
+		Position = position,
+		Size = size,
 
 		BorderSizePixel = 0,
 		BackgroundTransparency = 0,
 		BackgroundColor3 = Color3.fromRGB(32, 32, 32),
 
 		[WUX.Children] = {
+			WUX.New "UIPadding" {
+				PaddingTop = UDim.new(0, GRID_SECTION_PADDING),
+				PaddingBottom = UDim.new(0, GRID_SECTION_PADDING),
+				PaddingLeft = UDim.new(0, GRID_SECTION_PADDING),
+				PaddingRight = UDim.new(0, GRID_SECTION_PADDING),
+			},
 			WUX.New "UIListLayout" {
 				HorizontalAlignment = Enum.HorizontalAlignment.Left,
 				VerticalAlignment = Enum.VerticalAlignment.Top,
@@ -84,13 +37,58 @@ end
 local parentFrame = WUX.New "Frame" {
 	Name = "InventoryMenu",
 	Size = UDim2.new(1, 0, 1, 0),
-	BackgroundTransparency = 0.5,
+	BackgroundTransparency = 1,
 }
 
-containerSection(parentFrame, UDim2.new(0, 0, 0, 0), 10)
-container(parentFrame, 10, 4)
+local inventorySection = containerSection(parentFrame, Vector2.new(0.5, 0.5), UDim2.new(3/6, 0, 0.5, 0), UDim2.new(1/3, -20, 1, 0))
+local externalSection = containerSection(parentFrame, Vector2.new(0.5, 0.5), UDim2.new(5/6, 0, 0.5, 0), UDim2.new(1/3, -20, 1, 0))
+
+local containerObjects = {}
+local itemObjects = {}
+local isOpen = false
 
 -- public
+function inventoryMenu:toggle()
+	if isOpen then
+		self:close()
+	else
+		self:open()
+	end
+end
+
+function inventoryMenu:open()
+	parentFrame.Visible = true
+	isOpen = true
+end
+
+function inventoryMenu:close()
+	parentFrame.Visible = false
+	isOpen = false
+end
+
+function inventoryMenu:onContainerRemoved()
+
+end
+
+function inventoryMenu:onContainerAdded(containerId, containerData)
+	local containerObj = Container(inventorySection, containerData.width, containerData.height, containerId)
+	containerObjects[containerId] = containerObj
+end
+
+function inventoryMenu:onItemAdded(itemId, itemData)
+	local containerObj = itemData.container and containerObjects[itemData.container]
+	if not containerObj then
+		warn("InvMenu: Can't find container for item.")
+		return
+	end
+	local itemFrame = Item(itemId, itemData)
+	containerObj:addItem(itemData, itemFrame)
+end
+
+function inventoryMenu:onInventorySet()
+
+end
+
 function inventoryMenu:mount(parent)
 	parentFrame.Parent = parent
 end

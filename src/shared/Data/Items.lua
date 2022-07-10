@@ -9,7 +9,7 @@ local items: {[string]: ItemInfo} = {
     ["TestItem"] = {
         name = "Test Item",
         nameShort = "TestItem",
-        size = Vector2.new(2, 3),
+        size = Vector2.new(2, 2),
     },
 }
 

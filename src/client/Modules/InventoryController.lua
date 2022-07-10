@@ -18,8 +18,20 @@ local remoteCharacterInventoryRequestPickup
 local characterInventory
 
 local function onSpawn()
+    InventoryMenu:onContainerAdded("Hands", {
+        id = "Hands",
+        width = 6,
+        height = 2,
+    })
+    InventoryMenu:onItemAdded("UniqueItemId", {
+        id = "UniqueItemId",
+        item = "TestItem",
+        container = "Hands",
+        x = 0,
+        y = 0,
+    })
     ContextActionService:BindAction(OPEN_INVENTORY_BIND, function(_, inputState, inputAction) 
-        print("toggling inventory menu")
+        InventoryMenu:toggle()
     end, false, Enum.KeyCode.Tab)
 end
 
@@ -46,6 +58,7 @@ end
 
 function inventoryController:start()
 	-- handle interface controls
+    InventoryMenu:close()
     InventoryMenu:mount(Interface.screenGui)
     if CharacterController.character then
         onSpawn()

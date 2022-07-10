@@ -1,10 +1,16 @@
 local WUX = require(game.ReplicatedStorage.Source.Shared.WUX)
+local Items = require(game.ReplicatedStorage.Source.Shared.Data.Items)
+local InventoryTypes = require(game.ReplicatedStorage.Source.Shared.Data.Types.Inventory)
 
 local ITEM_LABEL_COLOR = Color3.fromRGB(214, 214, 214)
 local ITEM_LABEL_OFFSET = 5 -- pixels
 local ITEM_LABEL_HEIGHT = 9 -- pixels
 
-return function(itemId, itemData) 
+return function(itemId, itemData: InventoryTypes.Item)
+    local itemInfo = Items[itemData.item]
+    if not itemInfo then
+        warn("Item Component: Can't get item info from item: ", itemData.item)
+    end
     return WUX.New "Frame" {
         Name = "Item",
         BackgroundTransparency = 0.35,
@@ -21,7 +27,7 @@ return function(itemId, itemData)
                 TextYAlignment = Enum.TextYAlignment.Center,
                 TextScaled = true,
                 TextColor3 = Color3.fromRGB(214, 214, 214),
-                Text = "Item Lab"
+                Text = itemInfo.nameShort,
             }
         }
     }

@@ -1,7 +1,9 @@
 local WUX = require(game.ReplicatedStorage.Source.Shared.WUX)
+local Items = require(game.ReplicatedStorage.Source.Shared.Data.Items)
+local InventoryTypes = require(game.ReplicatedStorage.Source.Shared.Data.Types.Inventory)
 
-local SECTION_GRID_WIDTH = 10
-local CONTAINER_HEADER_PIXEL_SIZE = 20
+local SECTION_GRID_WIDTH = 8 -- how many gris in a section
+local CONTAINER_HEADER_PIXEL_SIZE = 16
 local COLOR_GRID_LINE = Color3.fromRGB(124, 124, 124)
 
 local container = WUX.Component(function(self, section, gridWidth, gridHeight, title)
@@ -69,12 +71,20 @@ local container = WUX.Component(function(self, section, gridWidth, gridHeight, t
 	return self
 end)
 
-function container:addItem(itemData, itemFrame)
+function container:addItem(itemData: InventoryTypes.Item, itemFrame)
+	local itemInfo = Items[itemData.item]
+	if not itemInfo then
+		warn("Container component: no item info for item: ", itemData.item)
+	end
     local x = itemData.x/self.gridWidth
     local y = itemData.y/self.gridHeight
     itemFrame.Position = UDim2.new(x, 0, y, 0)
-	itemFrame.Size = UDim2.new(2/self.gridWidth, 0, 2/self.gridHeight, 0)
+	itemFrame.Size = UDim2.new(itemInfo.size.X/self.gridWidth, 0, itemInfo.size.Y/self.gridHeight, 0)
 	itemFrame.Parent = self.content
+end
+
+function container:destroy()
+	self.frame:Destroy()
 end
 
 return container

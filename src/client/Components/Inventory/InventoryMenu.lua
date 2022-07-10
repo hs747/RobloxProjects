@@ -6,7 +6,9 @@ local Container = require(game.ReplicatedStorage.Source.Client.Components.Invent
 local Item = require(game.ReplicatedStorage.Source.Client.Components.Inventory.Item)
 
 -- private
-local GRID_SECTION_PADDING = 10
+local INV_MENU_SIZE = UDim2.new(1.3, 0, 0.9, 0) -- relative yy
+local GRID_SECTION_PADDING = 10 -- pixels from inv menu edge to sections
+local GRID_SECTION_BETWEEN_PADDING = 20 -- pixels between sections
 
 local function containerSection(parent, anchorPoint, position, size) 
 	return WUX.New "Frame" {
@@ -36,12 +38,16 @@ end
 
 local parentFrame = WUX.New "Frame" {
 	Name = "InventoryMenu",
-	Size = UDim2.new(1, 0, 1, 0),
+	SizeConstraint = Enum.SizeConstraint.RelativeYY,
+	Size = INV_MENU_SIZE,
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.new(0.5, 0, 0.5, 0),
 	BackgroundTransparency = 1,
 }
 
-local inventorySection = containerSection(parentFrame, Vector2.new(0.5, 0.5), UDim2.new(3/6, 0, 0.5, 0), UDim2.new(1/3, -20, 1, 0))
-local externalSection = containerSection(parentFrame, Vector2.new(0.5, 0.5), UDim2.new(5/6, 0, 0.5, 0), UDim2.new(1/3, -20, 1, 0))
+local loadoutSection = containerSection(parentFrame, Vector2.new(0.5, 0.5), UDim2.new(1/6, 0, 0.5, 0), UDim2.new(1/3, -GRID_SECTION_BETWEEN_PADDING, 1, 0))
+local inventorySection = containerSection(parentFrame, Vector2.new(0.5, 0.5), UDim2.new(3/6, 0, 0.5, 0), UDim2.new(1/3, -GRID_SECTION_BETWEEN_PADDING, 1, 0))
+local externalSection = containerSection(parentFrame, Vector2.new(0.5, 0.5), UDim2.new(5/6, 0, 0.5, 0), UDim2.new(1/3, -GRID_SECTION_BETWEEN_PADDING, 1, 0))
 
 local containerObjects = {}
 local itemObjects = {}
@@ -66,8 +72,11 @@ function inventoryMenu:close()
 	isOpen = false
 end
 
-function inventoryMenu:onContainerRemoved()
-
+function inventoryMenu:onContainerRemoved(containerId)
+	local containerObj = containerObjects[containerId]
+	if containerObj then
+		containerObj:destroy()
+	end
 end
 
 function inventoryMenu:onContainerAdded(containerId, containerData)

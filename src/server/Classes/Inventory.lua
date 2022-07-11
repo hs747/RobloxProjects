@@ -1,6 +1,24 @@
 -- server inventory classes --
 local Items = require(game.ReplicatedStorage.Source.Shared.Data.Items)
 local InventoryTypes = require(game.ReplicatedStorage.Source.Shared.Data.Types.Inventory)
+local InventoryDict = require(game.ReplicatedStorage.Source.Shared.Data.Dictionary).inventory
+
+local inventorySlot = {}
+inventorySlot.__index = inventorySlot
+
+function inventorySlot.new()
+	local self = setmetatable({}, inventorySlot)
+	self.item = nil
+	return self
+end
+
+function inventorySlot:setItem(item: InventoryTypes.Item)
+	self.item = item --id
+end
+
+function inventorySlot:removeItem()
+	self.item = nil
+end
 
 local inventoryContainer = {}
 inventoryContainer.__index = inventoryContainer
@@ -85,9 +103,49 @@ function inventory:addContainer(containerId, containerData: InventoryTypes.Conta
 end
 
 function inventory:addSlot(slotId)
-	self.slots[slotId] = {
-		id = slotId
-	}
+	self.slots[slotId] = inventorySlot.new()
+end
+
+function inventory:moveItem(itemId, targetType, targetId, x, y, r)
+	local itemData = self.items[itemId]
+	if not itemData then
+		return
+	end
+	if targetType == InventoryDict.moveTargetType.slot and itemData.slot == targetId then
+		-- moved into same slot, do nothing
+		return
+	end
+	if targetType == InventoryDict.moveTargetType.container and itemData.container == targetId then
+		-- moved in the same container
+		itemData.x = x
+		itemData.y = y
+		itemData.r = r
+		return
+	end
+	if itemData.container then
+		local currentContainer = self.containers[itemData.container]
+		currentContainer:removeItem(itemId, itemData)
+		itemData.container = nil
+	elseif itemData.slot then
+		local currentSlot = self.slots[itemData.slot]
+		currentSlot:removeItem()
+		itemData.slot = nil
+	end
+	if targetType == InventoryDict.moveTargetType.container then
+		itemData.x = x
+		itemData.y = y
+		itemData.r = r
+		itemData.container = targetId
+		local targetContainer = self.containers[targetId]
+		targetContainer:addItem(itemData)
+	elseif targetType == InventoryDict.moveTargetType.slot then
+		itemData.x = 1
+		itemData.y = 1
+		itemData.r = 0
+		itemData.slot = targetId
+		local targetSlot = self.slots[targetId]
+		targetSlot:setItem(itemData)
+	end
 end
 
 return inventory

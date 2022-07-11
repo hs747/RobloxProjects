@@ -4,6 +4,7 @@ local inventoryController = {}
 local ContextActionService = game:GetService("ContextActionService")
 local Networking = require(game.ReplicatedStorage.Source.Shared.Networking)
 local Items = require(game.ReplicatedStorage.Source.Shared.Data.Items)
+local InventoryDict = require(game.ReplicatedStorage.Source.Shared.Data.Dictionary).inventory
 local Inventory = require(game.ReplicatedStorage.Source.Client.Classes.Inventory)
 local InventoryMenu = require(game.ReplicatedStorage.Source.Client.Components.Inventory.InventoryMenu)
 local Interface
@@ -23,19 +24,31 @@ local remoteCharacterInventoryRequestPickup
 
 local characterInventory
 
-local function itemDragCallback(movingItemId, movingItemData, targetContainerId, targetX, targetY, targetR) 
-    local container = characterInventory:getContainer(targetContainerId) --todo: system for switching between "inventories" of containers
-    if not container then
-        return false
+local function itemDragCallback(movingItemId, movingItemData, targetId, targetType, targetX, targetY, targetR)
+    if targetType == InventoryDict.moveTargetType.container then 
+        local container = characterInventory:getContainer(targetId) --todo: system for switching between "inventories" of containers
+        if not container then
+            return false
+        end
+        local itemInfo = Items[movingItemData.item]
+        local isValid
+        if targetId == movingItemData.container then
+            isValid = container:isValidPlace(itemInfo, targetX, targetY, targetR, movingItemId)
+        else
+            isValid = container:isValidPlace(itemInfo, targetX, targetY, targetR)
+        end
+        return isValid
+    elseif targetType == InventoryDict.moveTargetType.slot then
+        local slot = characterInventory:getSlot(targetId)
+        if not slot then
+            return false
+        end
+        if targetId == movingItemData.slot then
+            return true
+        else
+            return slot:canMoveInto(movingItemData)
+        end
     end
-    local itemInfo = Items[movingItemData.item]
-    local isValid
-    if targetContainerId == movingItemData.container then
-        isValid = container:isValidPlace(itemInfo, targetX, targetY, targetR, movingItemId)
-    else
-        isValid = container:isValidPlace(itemInfo, targetX, targetY, targetR)
-    end
-    return isValid
 end
 
 local function onCharacterItemAdded(itemId, itemData)
@@ -43,14 +56,26 @@ local function onCharacterItemAdded(itemId, itemData)
     return guiObject
 end
 
-local function onCharacterContainerAdded(containerId, containerData)
-    characterInventory:_onContainerAdded(containerId, containerData)
-    InventoryMenu:onContainerAdded(containerId, containerData)
-end
-
 local function onCharacterItemRemoved()
 
 end
+
+local function onCharacterContainerAdded(containerId, containerData)
+    InventoryMenu:onContainerAdded(containerId, containerData)
+end
+
+local function onCharacterContainerRemoved(containerId)
+    InventoryMenu:onContainerRemoved(containerId)
+end
+
+local function onCharacterSlotAdded(slotId)
+   InventoryMenu:onSlotAdded(slotId)
+end
+
+local function onCharacterSlotRemoved(slotId)
+    
+end
+
 
 local function onSpawn()
     ContextActionService:BindAction(OPEN_INVENTORY_BIND, function(_, inputState, inputAction)
@@ -79,7 +104,7 @@ function inventoryController:init()
             onCharacterContainerAdded(id, container)
         end
         for id, slot in pairs(characterInventory.slots) do
-            -- ...
+            onCharacterSlotAdded(id)
         end
         for id, item in pairs(characterInventory.items) do
             onCharacterItemAdded(id, item)
@@ -91,9 +116,9 @@ function inventoryController:init()
     remoteCharacterInventoryRemoved.OnClientEvent:Connect(function()
         
     end)
-    remoteCharacterInventoryMoved.OnClientEvent:Connect(function(itemId, targetContainerId, targetX, targetY, targetR)
+    remoteCharacterInventoryMoved.OnClientEvent:Connect(function(itemId, targetType, targetId, targetX, targetY, targetR)
         print("got move update")
-        local itemData = characterInventory:_onMoved(itemId, targetContainerId, targetX, targetY, targetR)
+        local itemData = characterInventory:_onMoved(itemId, targetType, targetId, targetX, targetY, targetR)
         InventoryMenu:onItemMoved(itemId, itemData, itemDragCallback)
     end)
 end
@@ -102,12 +127,12 @@ function inventoryController:start()
 	-- handle interface controls
     InventoryMenu:close()
     InventoryMenu:mount(Interface.screenGui)
-    InventoryMenu.itemDragged:Connect(function(itemId, targetContainerId, targetX, targetY, targetR) 
+    InventoryMenu.itemDragged:Connect(function(itemId, targetId, targetType, targetX, targetY, targetR) 
         -- request server to move item
-        remoteCharacterInventoryRequestMove:FireServer(itemId, targetContainerId, targetX, targetY, targetR)
+        remoteCharacterInventoryRequestMove:FireServer(itemId, targetType, targetId, targetX, targetY, targetR)
     end)
-    InventoryMenu.itemClicked:Connect(function() 
-    
+    InventoryMenu.itemClicked:Connect(function()
+
     end)
     -- handle spawning events
     if CharacterController.character then

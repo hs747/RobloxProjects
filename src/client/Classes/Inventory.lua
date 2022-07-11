@@ -11,7 +11,9 @@ type ClientItem = Item & {
 }
 
 -- dependencies
+local InventoryDict = require(game.ReplicatedStorage.Source.Shared.Data.Dictionary).inventory
 local InventoryContainer = require(game.ReplicatedStorage.Source.Client.Classes.InventoryContainer)
+local InventorySlot = require(game.ReplicatedStorage.Source.Client.Classes.InventorySlot)
 
 -- the class
 local inventory = {}
@@ -30,7 +32,6 @@ function inventory.new(networkGroup)
 end
 
 -- network event callbacks
-
 function inventory:_onSet(data)
 	for _, container in ipairs(data[2]) do
 		self.containers[container[1]] = InventoryContainer.new({
@@ -40,7 +41,7 @@ function inventory:_onSet(data)
 	end
 
 	for _, slotId in ipairs(data[3]) do
-		self.slots[slotId] = nil
+		self.slots[slotId] = InventorySlot.new()
 	end
 
 	for _, item in ipairs(data[1]) do
@@ -76,20 +77,39 @@ function inventory:_onRemoved(item: Item)
 	end
 end
 
-function inventory:_onMoved(itemId, containerId, x, y, r)
+function inventory:_onMoved(itemId, targetType, targetId, x, y, r)
 	local item: Item = self.items[itemId]
-	if not (containerId == item.container) then
-		-- swap containers
-		local oldContainer, newContainer = self.containers[item.container], self.containers[containerId]
-		oldContainer:remove(item)
+	if targetType == InventoryDict.moveTargetType.slot and item.slot then
+		return item
+	end
+	if targetType == InventoryDict.moveTargetType.container and item.container == targetId then
+		local currentContainer = self.containers[item.container]
+		currentContainer:move(item, x, y, r)
+		return item
+	end
+	if item.container then
+		local currentContainer = self.containers[item.container]
+		currentContainer:remove(item)
+		item.container = nil
+	elseif item.slot then
+		local currentSlot = self.slots[item.slot]
+		currentSlot:remove()
+		item.slot = nil
+	end
+	if targetType == InventoryDict.moveTargetType.container then
 		item.x = x
 		item.y = y
 		item.r = r
-		item.container = containerId
-		newContainer:add(item)
-	else
-		local container = self.containers[containerId] -- either containerId or item.container index works
-		container:move(item, x, y, r)
+		item.container = targetId
+		local targetContainer = self.containers[targetId]
+		targetContainer:add(item)
+	elseif targetType == InventoryDict.moveTargetType.slot then
+		item.x = 1
+		item.y = 1
+		item.r = 0
+		item.slot = targetId
+		local targetSlot = self.slots[targetId]
+		targetSlot:set(item)
 	end
 	return item
 end
@@ -98,8 +118,16 @@ function inventory:getContainer(containerId)
 	return self.containers[containerId]
 end
 
+function inventory:getSlot(slotId)
+	return self.slots[slotId]
+end
+
 function inventory:_onContainerAdded(containerId, containerData)
 	self.containers[containerId] = InventoryContainer.new(containerData)
+end
+
+function inventory:_onSlotAdded(slotId)
+	self.slots[slotId] = InventorySlot.new(slotId)
 end
 
 return inventory

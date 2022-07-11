@@ -31,31 +31,13 @@ local function eventWrapInventoryContext(callback)
 	end
 end
 
-local function onCharacterInventoryRequestMove(player, inventory, itemId, targetContainerId, targetX, targetY, targetR)
-	local itemData = inventory.items[itemId]
-	if not itemData then
-		return
-	end
-	if not (targetContainerId == itemData.container) then
-		-- TODO: validate container ids
-		-- TODO: possibly relocate this to the inventory class
-		local currentContainer = inventory.containers[itemData.container]
-		local targetContainer = inventory.containers[targetContainerId]
-		currentContainer:removeItem(itemId, itemData)
-		targetContainer:addItem(itemId, itemData)
-	end
-	itemData.x = targetX
-	itemData.y = targetY
-	itemData.r = targetR
+local function onCharacterInventoryRequestMove(player, inventory, itemId, targetType, targetId, x, y, r)
+	inventory:moveItem(itemId, targetId, targetType, x, y, r)
 	-- this would be better implemented via remote functions but eh
-	remoteCharacterInventoryMoved:FireClient(player, itemId, targetContainerId, targetX, targetY, targetR)
+	remoteCharacterInventoryMoved:FireClient(player, itemId, targetType, targetId, x, y, r)
 end
 
 -- public
-function invManager:init()
-	
-end
-
 function invManager:start()
 	remoteCharacterInventoryRequestMove.OnServerEvent:Connect(eventWrapInventoryContext(onCharacterInventoryRequestMove))
 end
@@ -71,6 +53,7 @@ function invManager:onPlayerAdded(player)
 		width = 8,
 		height = 3,
 	})
+	inv:addSlot("Equipment")
 	inv:addItem("0001", {
 		id = "0001",
 		item = "TestItemLong",

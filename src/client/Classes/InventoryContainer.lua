@@ -20,16 +20,20 @@ function invContainer:isValidPlace(itemInfo: Items.ItemInfo, itemX, itemY, itemR
 	local dX, dY = Array2D.rotateDimension(itemInfo.size.X, itemInfo.size.Y, itemR)
 	for y = itemY, itemY + dY - 1 do
 		if y < 1 or y > self.height then
+			print("out of bounds y")
 			return false
 		end
 		for x = itemX, itemX + dX - 1 do
 			if x < 1 or x > self.width then
+				print("out of bounds x")
 				return false
 			end
-			if ignoreId and ignoreId == Array2D.get(self.grid, self.width, self.height, x, y) then
+			local atId = Array2D.get(self.grid, self.width, self.height, x, y)
+			if ignoreId and ignoreId == atId then
 				continue
 			end
-			if Array2D.get(self.grid, self.width, self.height, x, y) then
+			if atId then
+				print("overlapping with existing")
 				return false
 			end
 		end

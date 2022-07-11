@@ -8,8 +8,10 @@ local Cleaner = require(game.ReplicatedStorage.Source.Shared.Cleaner)
 local WUX = require(game.ReplicatedStorage.Source.Shared.WUX)
 local Array2D = require(game.ReplicatedStorage.Source.Shared.Util.Array2D)
 local Items = require(game.ReplicatedStorage.Source.Shared.Data.Items)
+local InventoryDict = require(game.ReplicatedStorage.Source.Shared.Data.Dictionary).inventory
 
 -- components
+local Slot = require(game.ReplicatedStorage.Source.Client.Components.Inventory.Slot)
 local Container = require(game.ReplicatedStorage.Source.Client.Components.Inventory.Container)
 local Item = require(game.ReplicatedStorage.Source.Client.Components.Inventory.Item)
 
@@ -18,7 +20,9 @@ local INV_MENU_SIZE = UDim2.new(1.75, 0, 0.9, 0) -- relative yy
 local GRID_SECTION_PADDING = 10 -- pixels from inv menu edge to sections
 local GRID_SECTION_BETWEEN_PADDING = 20 -- pixels between sections
 local GRID_SECTION_VERTICAL_PADDING = 5 -- pixels between containers in the same section
+local DRAG_GRID_SIZE_PIXEL = 25
 
+local slotObjects = {}
 local containerObjects = {}
 local itemObjects = {}
 local isOpen = false
@@ -42,7 +46,7 @@ local sectionParentFrame = WUX.New "Frame" {
 	BackgroundTransparency = 1,
 }
 
-local function containerSection(parent, anchorPoint, position, size) 
+local function section(parent, anchorPoint, position ,size)
 	return WUX.New "Frame" {
 		Parent = parent,
 		AnchorPoint = anchorPoint,
@@ -52,21 +56,25 @@ local function containerSection(parent, anchorPoint, position, size)
 		BorderSizePixel = 0,
 		BackgroundTransparency = 0,
 		BackgroundColor3 = Color3.fromRGB(32, 32, 32),
-
-		[WUX.Children] = {
-			WUX.New "UIPadding" {
-				PaddingTop = UDim.new(0, GRID_SECTION_PADDING),
-				PaddingBottom = UDim.new(0, GRID_SECTION_PADDING),
-				PaddingLeft = UDim.new(0, GRID_SECTION_PADDING),
-				PaddingRight = UDim.new(0, GRID_SECTION_PADDING),
-			},
-			WUX.New "UIListLayout" {
-				HorizontalAlignment = Enum.HorizontalAlignment.Left,
-				VerticalAlignment = Enum.VerticalAlignment.Top,
-				Padding = UDim.new(0, GRID_SECTION_VERTICAL_PADDING)
-			}
-		}
 	}
+end
+
+local function containerSection(parent, anchorPoint, position, size)
+	local sect = section(parent, anchorPoint, position, size)
+	WUX.New "UIPadding" {
+		Parent = sect,
+		PaddingTop = UDim.new(0, GRID_SECTION_PADDING),
+		PaddingBottom = UDim.new(0, GRID_SECTION_PADDING),
+		PaddingLeft = UDim.new(0, GRID_SECTION_PADDING),
+		PaddingRight = UDim.new(0, GRID_SECTION_PADDING),
+	}
+	WUX.New "UIListLayout" {
+		Parent = sect,
+		HorizontalAlignment = Enum.HorizontalAlignment.Left,
+		VerticalAlignment = Enum.VerticalAlignment.Top,
+		Padding = UDim.new(0, GRID_SECTION_VERTICAL_PADDING)
+	}
+	return sect
 end
 
 local function itemMoveGuiObject(itemData, gridAbsoluteSize)
@@ -93,10 +101,17 @@ end
 -- item movement
 local itemMoveState
 
-local function getContainerFromPoint(point: Vector2)
+-- Using the provided vector 2, finds the destination container or slot.
+-- Returns the container/slot id, an enum if it is a container or slot and the object.
+local function getDragTargetFromPoint(point: Vector2)
 	for id, containerObj in pairs(containerObjects) do
 		if containerObj:isPointIn(point) then
-			return id, containerObj
+			return id, InventoryDict.moveTargetType.container, containerObj
+		end
+	end
+	for id, slotObj in pairs(slotObjects) do
+		if slotObj:isPointIn(point) then
+			return id, InventoryDict.moveTargetType.slot, slotObj
 		end
 	end
 end
@@ -106,12 +121,19 @@ local function onItemDragMove()
 	local mousePos = UserInputService:GetMouseLocation() - inset
 	itemMoveState.moveGuiObject.Position = UDim2.new(0, mousePos.X - itemMoveState.moveGuiObjectOffset.X, 0, mousePos.Y - itemMoveState.moveGuiObjectOffset.Y)
 	local center = itemMoveState.moveGuiObject.AbsolutePosition + itemMoveState.moveGuiObject.AbsoluteSize/2
-	local containerId, container = getContainerFromPoint(center)
-	if container then
-		local targetX, targetY = container:getDragGridPos(itemMoveState.moveGuiObject.AbsolutePosition)
-		if itemMoveState.itemDragCallback(itemMoveState.itemId, itemMoveState.itemData, containerId, targetX, targetY, itemMoveState.r) then
-			container:addTempHighlight(itemMoveState.moveHighlightObject, itemMoveState.itemData, targetX, targetY, itemMoveState.r)
-			return true, containerId, targetX, targetY
+	local targetId, targetType, target = getDragTargetFromPoint(center)
+	if targetId then
+		local valid
+		local targetX, targetY
+		if targetType == InventoryDict.moveTargetType.container then
+			targetX, targetY = target:getDragGridPos(itemMoveState.moveGuiObject.AbsolutePosition)
+			valid = itemMoveState.itemDragCallback(itemMoveState.itemId, itemMoveState.itemData, targetId, targetType, targetX, targetY, itemMoveState.r)
+		elseif targetType == InventoryDict.moveTargetType.slot then
+			valid = itemMoveState.itemDragCallback(itemMoveState.itemId, itemMoveState.itemData, targetId, targetType)
+		end
+		if valid then
+			target:addTempHighlight(itemMoveState.moveHighlightObject, itemMoveState.itemData, targetX, targetY, itemMoveState.r)
+			return true, targetId, targetType, targetX, targetY
 		end
 	end
 	itemMoveState.moveHighlightObject.Parent = nil
@@ -130,11 +152,10 @@ local function onItemDragEnded()
 		return
 	end
 	-- report to higher level that something was dragged
-	local validPlacement, containerId, x, y = onItemDragMove()
+	local validPlacement, targetId, targetType, x, y = onItemDragMove()
 	if validPlacement then
-		inventoryMenu.itemDragged:Fire(itemMoveState.itemId, containerId, x, y, itemMoveState.r)
+		inventoryMenu.itemDragged:Fire(itemMoveState.itemId, targetId, targetType, x, y, itemMoveState.r)
 	end
-
 	-- clean
 	itemMoveState.itemCleaner:clean()
 	itemMoveState = nil
@@ -147,19 +168,19 @@ local function onItemInputBegan(inputObj, itemFrame, itemId, itemData, itemDragC
 	end
 	if inputObj.UserInputType == Enum.UserInputType.MouseButton1 then
 		-- start movement
-		local container = containerObjects[itemData.container]
+		--local container = containerObjects[itemData.container]
 		local inset = GuiService:GetGuiInset()
 		local mousePos = UserInputService:GetMouseLocation() - inset
 		
-		local gridSize = container:getGridPixelSize() 
+		--local gridSize = container:getGridPixelSize()
 		itemMoveState = {
 			itemId = itemId,
 			itemData = itemData,
 			r = itemData.r or 0,
 			itemDragCallback = itemDragCallback,
 			itemGuiObject = itemFrame,
-			gridSize = gridSize,
-			moveGuiObject = itemMoveGuiObject(itemData, gridSize),
+			gridSize = DRAG_GRID_SIZE_PIXEL,
+			moveGuiObject = itemMoveGuiObject(itemData, DRAG_GRID_SIZE_PIXEL),
 			moveHighlightObject = itemMovePlaceHighlight(),
 			moveGuiObjectOffset = mousePos - itemFrame.AbsolutePosition,
 			itemCleaner = Cleaner.new()
@@ -189,10 +210,17 @@ local function onItemInputBegan(inputObj, itemFrame, itemId, itemData, itemDragC
 	end
 end
 
--- container sections
-local loadoutSection = containerSection(sectionParentFrame, Vector2.new(0.5, 0.5), UDim2.new(1/6, 0, 0.5, 0), UDim2.new(1/3, -GRID_SECTION_BETWEEN_PADDING, 1, 0))
+-- sections
+local loadoutSection = section(sectionParentFrame, Vector2.new(0.5, 0.5), UDim2.new(1/6, 0, 0.5, 0), UDim2.new(1/3, -GRID_SECTION_BETWEEN_PADDING, 1, 0))
 local inventorySection = containerSection(sectionParentFrame, Vector2.new(0.5, 0.5), UDim2.new(3/6, 0, 0.5, 0), UDim2.new(1/3, -GRID_SECTION_BETWEEN_PADDING, 1, 0))
 local externalSection = containerSection(sectionParentFrame, Vector2.new(0.5, 0.5), UDim2.new(5/6, 0, 0.5, 0), UDim2.new(1/3, -GRID_SECTION_BETWEEN_PADDING, 1, 0))
+
+-- slots
+local equipmentSlot = Slot {
+	Position = UDim2.new(0.5, 0, 0.5, 0)
+}
+equipmentSlot:mount(loadoutSection)
+
 
 -- public --
 inventoryMenu.itemDragged = Signal.new() -- fires w/ item id & target container & target pos
@@ -234,6 +262,17 @@ function inventoryMenu:onContainerAdded(containerId, containerData)
 	containerObjects[containerId] = containerObj
 end
 
+function inventoryMenu:onSlotRemoved(slotId)
+	-- do nothing
+end
+
+function inventoryMenu:onSlotAdded(slotId)
+	--slotObjects[slotId] = slotObj
+	if slotId == "Equipment" then
+		slotObjects[slotId] = equipmentSlot
+	end
+end
+
 -- adds the item to the container in the gui
 -- itemDragCallback param is a callback which allows the inventory controller
 -- to control the dragging system
@@ -258,12 +297,22 @@ function inventoryMenu:onItemMoved(itemId, itemData, itemDragCallback)
 	if not itemObj then
 		inventoryMenu:onItemAdded(itemId, itemData, itemDragCallback)
 	end
-	local containerObj = itemData.container and containerObjects[itemData.container]
-	if not containerObj then
-		warn("InvMenu: Can't find container for item.")
-		return
+	if itemData.container then
+		local containerObj = containerObjects[itemData.container]
+		if not containerObj then
+			warn("InvMenu: Can't find container for item.")
+			return
+		end
+		containerObj:addItem(itemData, itemObj)
+	elseif itemData.slot then
+		local slotObj = slotObjects[itemData.slot]
+		if not slotObj then
+			warn("InvMenu: Can't find slot for item.")
+		end
+		slotObj:addItem(itemData, itemObj)
+	else
+		warn("InvMenu: Item has no slot or container.")
 	end
-	containerObj:addItem(itemData, itemObj)
 end
 
 function inventoryMenu:onItemRemoved()

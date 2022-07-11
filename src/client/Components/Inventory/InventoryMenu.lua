@@ -14,7 +14,7 @@ local Container = require(game.ReplicatedStorage.Source.Client.Components.Invent
 local Item = require(game.ReplicatedStorage.Source.Client.Components.Inventory.Item)
 
 -- private --
-local INV_MENU_SIZE = UDim2.new(1.3, 0, 0.9, 0) -- relative yy
+local INV_MENU_SIZE = UDim2.new(1.75, 0, 0.9, 0) -- relative yy
 local GRID_SECTION_PADDING = 10 -- pixels from inv menu edge to sections
 local GRID_SECTION_BETWEEN_PADDING = 20 -- pixels between sections
 local GRID_SECTION_VERTICAL_PADDING = 5 -- pixels between containers in the same section

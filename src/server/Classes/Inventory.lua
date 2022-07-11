@@ -1,10 +1,13 @@
 -- server inventory classes --
+local InventoryTypes = require(game.ReplicatedStorage.Source.Shared.Data.Types.Inventory)
 
 local inventoryContainer = {}
 inventoryContainer.__index = inventoryContainer
 
-function inventoryContainer.new()
+function inventoryContainer.new(containerData: InventoryTypes.Container)
 	local self = setmetatable({}, inventoryContainer)
+	self.width = containerData.width
+	self.height = containerData.height
 	return self
 end
 
@@ -31,16 +34,22 @@ function inventory:serialize()
 	data[1] = {}
 	for id, item in pairs(self.items) do
 		table.insert(data[1], {
-			[1] = id,
-			[2] = item.x,
-			[3] = item.y,
-			[4] = item.container,
+			id,
+			item.item,
+			item.x,
+			item.y,
+			item.r,
+			item.container,
 		})
 	end
 	-- containers
 	data[2] = {}
 	for id, container in pairs(self.containers) do
-		table.insert(data[2], id)
+		table.insert(data[2], {
+			id,
+			container.width,
+			container.height,
+		})
 	end
 	-- slots
 	data[3] = {}
@@ -55,14 +64,12 @@ function inventory:addListener(player: Player)
 	table.insert(self.listeners, player)
 end
 
-function inventory:addItem(id, itemData)
+function inventory:addItem(id: string, itemData: InventoryTypes.Item)
 	self.items[id] = itemData
 end
 
-function inventory:addContainer(containerId)
-	self.containers[containerId] = {
-		id = containerId,
-	}
+function inventory:addContainer(containerId, containerData: InventoryTypes.Container)
+	self.containers[containerId] = inventoryContainer.new(containerData)
 end
 
 function inventory:addSlot(slotId)

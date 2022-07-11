@@ -32,8 +32,11 @@ end
 -- network event callbacks
 
 function inventory:_onSet(data)
-	for _, containerId in ipairs(data[2]) do
-		self.containers[containerId] = InventoryContainer.new()
+	for _, container in ipairs(data[2]) do
+		self.containers[container[1]] = InventoryContainer.new({
+			width = container[2],
+			height = container[3],
+		})
 	end
 
 	for _, slotId in ipairs(data[3]) do
@@ -43,9 +46,11 @@ function inventory:_onSet(data)
 	for _, item in ipairs(data[1]) do
 		self:_onAdded({
 			id = item[1],
-			x = item[2],
-			y = item[3],
-			container = item[4],
+			item = item[2],
+			x = item[3],
+			y = item[4],
+			r = item[5],
+			container = item[6],
 		})
 	end
 end

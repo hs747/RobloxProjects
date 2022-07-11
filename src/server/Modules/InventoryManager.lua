@@ -29,14 +29,18 @@ end
 function invManager:onPlayerAdded(player)
 	-- give character inventory to player
 	local inv = Inventory.new()
-	inv:addContainer("Hands")
+	inv:addContainer("Hands", {
+		width = 6,
+		height = 2,
+	})
 	inv:addItem("0001", {
 		id = "0001",
-		x = 0,
-		y = 0,
+		item = "TestItemLong",
+		x = 1,
+		y = 1,
+		r = 0,
 		container = "Hands",
 	})
-
 	remoteCharacterInventorySet:FireClient(player, inv:serialize())
 end
 

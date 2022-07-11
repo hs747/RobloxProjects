@@ -50,24 +50,6 @@ local function onCharacterItemRemoved()
 end
 
 local function onSpawn()
-    onCharacterContainerAdded("Hands", {
-        id = "Hands",
-        width = 6,
-        height = 2,
-    })
-    onCharacterContainerAdded("Backpack", {
-        id = "Backpack",
-        width = 8,
-        height = 3,
-    })
-    onCharacterItemAdded("UniqueItemId", {
-        id = "UniqueItemId",
-        item = "TestItemLong",
-        container = "Hands",
-        x = 1,
-        y = 1,
-        r = 1,
-    })
     ContextActionService:BindAction(OPEN_INVENTORY_BIND, function(_, inputState, inputAction)
         if inputState == Enum.UserInputState.Begin then
             InventoryMenu:toggle(function() 
@@ -88,15 +70,24 @@ function inventoryController:init()
 
 	characterInventory = Inventory.new()
     -- networking
-    --[[remoteCharacterInventorySet.OnClientEvent:Connect(function(data) 
+    remoteCharacterInventorySet.OnClientEvent:Connect(function(data) 
         characterInventory:_onSet(data)
+        for id, container in pairs(characterInventory.containers) do
+            onCharacterContainerAdded(id, container)
+        end
+        for id, slot in pairs(characterInventory.slots) do
+            -- ...
+        end
+        for id, item in pairs(characterInventory.items) do
+            onCharacterItemAdded(id, item)
+        end
     end)
     remoteCharacterInventoryAdded.OnClientEvent:Connect(function() 
     
     end)
     remoteCharacterInventoryRemoved.OnClientEvent:Connect(function() 
     
-    end)]]
+    end)
 end
 
 function inventoryController:start()

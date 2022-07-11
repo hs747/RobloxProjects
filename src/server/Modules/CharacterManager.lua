@@ -24,6 +24,7 @@ local function addCharacterStat(statFolder, statName, initialValue)
 	return stat
 end
 
+-- stat/health modifiers
 function characterManager:getStat(character, statName)
 	local statFolder = character:FindFirstChild("Stats")
 	local stat = statFolder:FindFirstChild(statName)
@@ -55,6 +56,7 @@ function characterManager:modifyHealth(character, modifyCallback)
 	humanoid.Health = modifyCallback(humanoid.Health)
 end
 
+-- framework methods
 function characterManager:start()
 	lastStatUpdate = os.clock()
 	RunService.Heartbeat:Connect(function() 

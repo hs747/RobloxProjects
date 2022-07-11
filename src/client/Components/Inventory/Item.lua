@@ -4,7 +4,7 @@ local InventoryTypes = require(game.ReplicatedStorage.Source.Shared.Data.Types.I
 
 local ITEM_LABEL_COLOR = Color3.fromRGB(214, 214, 214)
 local ITEM_LABEL_OFFSET = 5 -- pixels
-local ITEM_LABEL_HEIGHT = 9 -- pixels
+local ITEM_LABEL_HEIGHT = 10 -- pixels
 
 return function(itemId, itemData: InventoryTypes.Item)
     local itemInfo = Items[itemData.item]

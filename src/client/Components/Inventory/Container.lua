@@ -1,4 +1,5 @@
 local WUX = require(game.ReplicatedStorage.Source.Shared.WUX)
+local Array2D = require(game.ReplicatedStorage.Source.Shared.Util.Array2D)
 local Items = require(game.ReplicatedStorage.Source.Shared.Data.Items)
 local InventoryTypes = require(game.ReplicatedStorage.Source.Shared.Data.Types.Inventory)
 
@@ -6,8 +7,8 @@ local SECTION_GRID_WIDTH = 8 -- how many gris in a section
 local CONTAINER_HEADER_PIXEL_SIZE = 16
 local COLOR_GRID_LINE = Color3.fromRGB(124, 124, 124)
 
-local container = WUX.Component(function(self, section, gridWidth, gridHeight, title)
-    print(self, section, gridWidth, gridHeight)
+local container = WUX.Component(function(self, section, id, gridWidth, gridHeight, title)
+	self.id = id
     self.gridWidth = gridWidth
     self.gridHeight = gridHeight
 
@@ -76,11 +77,38 @@ function container:addItem(itemData: InventoryTypes.Item, itemFrame)
 	if not itemInfo then
 		warn("Container component: no item info for item: ", itemData.item)
 	end
-    local x = itemData.x/self.gridWidth
-    local y = itemData.y/self.gridHeight
+	local dX, dY = Array2D.rotateDimension(itemInfo.size.X, itemInfo.size.Y, itemData.r)
+    local x = (itemData.x - 1)/self.gridWidth
+    local y = (itemData.y - 1)/self.gridHeight
     itemFrame.Position = UDim2.new(x, 0, y, 0)
-	itemFrame.Size = UDim2.new(itemInfo.size.X/self.gridWidth, 0, itemInfo.size.Y/self.gridHeight, 0)
+	itemFrame.Size = UDim2.new(dX/self.gridWidth, 0, dY/self.gridHeight, 0)
 	itemFrame.Parent = self.content
+end
+
+function container:getDragGridPos(cornerPos)
+	local cornerPosLocal = cornerPos - self.content.AbsolutePosition
+	local pW = (self.content.AbsoluteSize.X/self.gridWidth)
+	local pH = (self.content.AbsoluteSize.Y/self.gridHeight)
+	return math.floor(0.5 + cornerPosLocal.X/pW) + 1, math.floor(0.5 + cornerPosLocal.Y/pH) + 1
+end
+
+function container:addTempHighlight(highlight, itemData, x, y, r)
+	local itemInfo = Items[itemData.item]
+	local dX, dY = Array2D.rotateDimension(itemInfo.size.X, itemInfo.size.Y, r)
+	highlight.Size = UDim2.new(dX/self.gridWidth, 0, dY/self.gridHeight, 0)
+	highlight.Position = UDim2.new((x - 1)/self.gridWidth, 0, (y - 1)/self.gridHeight, 0)
+	highlight.Parent = self.content
+end
+
+function container:isPointIn(point: Vector2)
+	local contentPos, contentSize = self.content.AbsolutePosition, self.content.AbsoluteSize
+	point -= contentPos
+	return point.X >= 0 and point.X <= contentSize.X and point.Y >= 0 and point.Y <= contentSize.Y
+end
+
+-- returns pixels/grid cell for this specific container
+function container:getGridPixelSize()
+	return self.frame.AbsoluteSize.X/self.gridWidth
 end
 
 function container:destroy()

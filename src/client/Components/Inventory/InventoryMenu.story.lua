@@ -1,12 +1,14 @@
 local InventoryMenu = require(game.ReplicatedStorage.Source.Client.Components.Inventory.InventoryMenu)
 return function(parent)
 	InventoryMenu:onContainerAdded("Hands", {
-		width = 10,
+		width = 8,
 		height = 3,
 	})
 	InventoryMenu:onItemAdded("SomeItem", {
-		x = 0,
-		y = 0,
+		x = 1,
+		y = 1,
+		r = 1,
+		item = "TestItemLong",
 		container = "Hands",
 	})
 	InventoryMenu:mount(parent)

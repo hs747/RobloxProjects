@@ -71,8 +71,12 @@ function inventory:_onRemoved(item: Item)
 	end
 end
 
-function inventory:addStaticContainer(containerName)
-	
+function inventory:getContainer(containerId)
+	return self.containers[containerId]
+end
+
+function inventory:_onContainerAdded(containerId, containerData)
+	self.containers[containerId] = InventoryContainer.new(containerData)
 end
 
 return inventory

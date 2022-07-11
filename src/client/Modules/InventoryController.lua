@@ -15,7 +15,10 @@ local OPEN_INVENTORY_BIND = "OpenInventoryMenu"
 local remoteCharacterInventorySet = Networking.getEvent("Inventory/Character/Set")
 local remoteCharacterInventoryAdded = Networking.getEvent("Inventory/Character/Added")
 local remoteCharacterInventoryRemoved = Networking.getEvent("Inventory/Character/Removed")
-local remoteCharacterInventoryRequestMove
+local remoteCharacterInventoryMoved = Networking.getEvent("Inventory/Character/Moved")
+
+
+local remoteCharacterInventoryRequestMove = Networking.getEvent("Inventory/Character/Move")
 local remoteCharacterInventoryRequestPickup
 
 local characterInventory
@@ -83,10 +86,15 @@ function inventoryController:init()
         end
     end)
     remoteCharacterInventoryAdded.OnClientEvent:Connect(function() 
-    
+        
     end)
-    remoteCharacterInventoryRemoved.OnClientEvent:Connect(function() 
-    
+    remoteCharacterInventoryRemoved.OnClientEvent:Connect(function()
+        
+    end)
+    remoteCharacterInventoryMoved.OnClientEvent:Connect(function(itemId, targetContainerId, targetX, targetY, targetR)
+        print("got move update")
+        local itemData = characterInventory:_onMoved(itemId, targetContainerId, targetX, targetY, targetR)
+        InventoryMenu:onItemMoved(itemId, itemData, itemDragCallback)
     end)
 end
 
@@ -94,6 +102,14 @@ function inventoryController:start()
 	-- handle interface controls
     InventoryMenu:close()
     InventoryMenu:mount(Interface.screenGui)
+    InventoryMenu.itemDragged:Connect(function(itemId, targetContainerId, targetX, targetY, targetR) 
+        -- request server to move item
+        remoteCharacterInventoryRequestMove:FireServer(itemId, targetContainerId, targetX, targetY, targetR)
+    end)
+    InventoryMenu.itemClicked:Connect(function() 
+    
+    end)
+    -- handle spawning events
     if CharacterController.character then
         onSpawn()
     end

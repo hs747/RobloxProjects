@@ -76,6 +76,24 @@ function inventory:_onRemoved(item: Item)
 	end
 end
 
+function inventory:_onMoved(itemId, containerId, x, y, r)
+	local item: Item = self.items[itemId]
+	if not (containerId == item.container) then
+		-- swap containers
+		local oldContainer, newContainer = self.containers[item.container], self.containers[containerId]
+		oldContainer:remove(item)
+		item.x = x
+		item.y = y
+		item.r = r
+		item.container = containerId
+		newContainer:add(item)
+	else
+		local container = self.containers[containerId] -- either containerId or item.container index works
+		container:move(item, x, y, r)
+	end
+	return item
+end
+
 function inventory:getContainer(containerId)
 	return self.containers[containerId]
 end

@@ -1,4 +1,5 @@
 -- server inventory classes --
+local Items = require(game.ReplicatedStorage.Source.Shared.Data.Items)
 local InventoryTypes = require(game.ReplicatedStorage.Source.Shared.Data.Types.Inventory)
 
 local inventoryContainer = {}
@@ -8,7 +9,18 @@ function inventoryContainer.new(containerData: InventoryTypes.Container)
 	local self = setmetatable({}, inventoryContainer)
 	self.width = containerData.width
 	self.height = containerData.height
+	self.volume = 0 -- weakly implemented way to check for space overfilling
 	return self
+end
+
+function inventoryContainer:addItem(itemId, itemData)
+	local itemInfo = Items[itemData.item]
+	self.volume += itemInfo.size.X * itemInfo.size.Y
+end
+
+function inventoryContainer:removeItem(itemId, itemData)
+	local itemInfo = Items[itemData.item]
+	self.volume -= itemInfo.size.X * itemInfo.size.Y
 end
 
 -- base class for an inventory (does not handle networking)

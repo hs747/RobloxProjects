@@ -47,7 +47,7 @@ function invContainer:add(item: InventoryTypes.Item)
 		warn("InventoryContainer: can't get item info for item: ", item.item)
 	end
 	-- add item to grid
-	local dX, dY = Array2D.rotateDimension(itemInfo.size.X, itemInfo.size.Y, 0)
+	local dX, dY = Array2D.rotateDimension(itemInfo.size.X, itemInfo.size.Y, item.r)
 	for y = item.y, item.y + dY - 1 do
 		for x = item.x, item.x + dX - 1 do
 			Array2D.set(self.grid, self.width, self.height, x, y, item.id) -- todo: potentially change this to a direct ref to the item
@@ -56,7 +56,21 @@ function invContainer:add(item: InventoryTypes.Item)
 end
 
 -- assumes item is in this container
-function invContainer:remove(item)
+-- if swapping item between containers, dont set item data until after calling this
+function invContainer:remove(item: InventoryTypes.Item)
+	-- fetch item info
+	local itemInfo = Items[item.item]
+	if not itemInfo then
+		warn("InventoryContainer: can't get item info for item: ", item.item)
+	end
+	-- set occupied grid cells to nil
+	local dX, dY = Array2D.rotateDimension(itemInfo.size.X, itemInfo.size.Y, item.r)
+	for y = item.y, item.y + dY - 1 do
+		for x = item.x, item.x + dX - 1 do
+			Array2D.set(self.grid, self.width, self.height, x, y, nil) -- todo: potentially change this to a direct ref to the item
+		end
+	end
+	-- remote item from list (forgot why im storing the items in a list tbh)
 	table.remove(self.items, item._containerIndex)
 	-- o(1) method below: might enable if this becomes a bottleneck
 	--[[
@@ -65,6 +79,34 @@ function invContainer:remove(item)
 	self.items[i1] = last
 	self.items[i2] = nil
 	]]
+end
+
+-- moves an item between locations w/ in the same container (ONLY WHEN MOVING IN THE SAME CONTAINER)
+-- also sets the item position for you
+-- make sure you don't set the new item position data before calling this
+function invContainer:move(item: InventoryTypes.Item, x, y, r)
+	-- fetch item info
+	local itemInfo = Items[item.item]
+	if not itemInfo then
+		warn("InventoryContainer: can't get item info for item: ", item.item)
+	end
+	-- set previously occupied grid cells to nil
+	local dX, dY = Array2D.rotateDimension(itemInfo.size.X, itemInfo.size.Y, item.r)
+	for y = item.y, item.y + dY - 1 do
+		for x = item.x, item.x + dX - 1 do
+			Array2D.set(self.grid, self.width, self.height, x, y, nil) -- todo: potentially change this to a direct ref to the item
+		end
+	end
+	-- set newly occupied grid cells to item
+	item.x = x
+	item.y = y
+	item.r = r
+	local dX, dY = Array2D.rotateDimension(itemInfo.size.X, itemInfo.size.Y, item.r)
+	for y = item.y, item.y + dY - 1 do
+		for x = item.x, item.x + dX - 1 do
+			Array2D.set(self.grid, self.width, self.height, x, y, item.id) -- todo: potentially change this to a direct ref to the item
+		end
+	end
 end
 
 return invContainer

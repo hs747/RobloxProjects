@@ -41,7 +41,6 @@ function interfaceController:init()
 
 	interfaceController.screenGui = mainScreenGui()
 	currentLockDisruptor = mouseLockDisruptor(interfaceController.screenGui)
-	print(currentLockDisruptor, currentLockDisruptor:GetFullName())
 end
 
 function interfaceController:enterFirstPersonMode()
@@ -55,7 +54,6 @@ function interfaceController:enterMenuMode()
 	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 	UserInputService.MouseIconEnabled = true
 	ContextActionService:BindActionAtPriority(SINK_RIGHT_CLICK_BIND, function()
-		print("sinking")
 		return Enum.ContextActionResult.Sink
 	end, false, SINK_RIGHT_CLICK_PRIORITY, Enum.UserInputType.MouseButton2)
 	currentLockDisruptor.Visible = true

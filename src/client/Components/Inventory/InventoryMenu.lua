@@ -123,7 +123,6 @@ local function onItemDragRotate()
 	local dX, dY = Array2D.rotateDimension(itemInfo.size.X, itemInfo.size.Y, itemMoveState.r)
 	itemMoveState.moveGuiObject.Size = UDim2.new(0, dX * itemMoveState.gridSize, 0, dY * itemMoveState.gridSize)
 	onItemDragMove()
-	
 end
 
 local function onItemDragEnded()
@@ -175,6 +174,7 @@ local function onItemInputBegan(inputObj, itemFrame, itemId, itemData, itemDragC
 				elseif inputObj.UserInputType == Enum.UserInputType.Keyboard then
 					if inputObj.KeyCode == Enum.KeyCode.R then
 						itemMoveState.r = (itemMoveState.r + 1)%2
+						itemMoveState.moveGuiObjectOffset = Vector2.new(itemMoveState.moveGuiObjectOffset.Y, itemMoveState.moveGuiObjectOffset.Y)
 						onItemDragRotate()
 					end
 				end

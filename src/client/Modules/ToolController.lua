@@ -1,8 +1,10 @@
 local toolController = {}
 
 -- dependencies
+local ContextActionService = game:GetService("ContextActionService")
 local RunService = game:GetService("RunService")
 local CamController
+local CharacterController
 
 -- constants
 local RIG_RENDER_BIND = "UpdateFPRig"
@@ -57,10 +59,33 @@ local function onCharacterRemoving()
 end
 
 
+-- grr no OOP
+local itemToolController = {}
+
+function itemToolController:init(id, toolInfo)
+	local toolData = {
+		id = id,
+		toolInfo = toolInfo,
+		animations = {},
+	}
+	return toolData
+end
+
+function itemToolController:load(toolData)
+	-- load animation tracks
+end
+
+function itemToolController:unload(toolData)
+	-- unload animation tracks
+end
+
 -- public
+toolController.tools = {}
 toolController.equipped = nil
 toolController.equippedModel = nil
 toolController.firstPersonRig = nil
+
+-- TODO: implement keybindings for equipping & unequipping tools
 
 function toolController:equip()
 	
@@ -70,18 +95,33 @@ function toolController:unequip()
 	
 end
 
+function toolController:addTool(itemId, toolInfo)
+	if not character then
+		return
+	end
+	-- fetch tool controller
+	-- tool controller loads up stuff (animations, etc)
+	local toolData = {} -- controller:load()
+	-- add tool data to tool list
+	toolController.tools[itemId] = toolData
+end
+
+function toolController:removeTool(itemId)
+	-- fetch tool controller
+	-- tell it to cleanup
+	-- controller:unload()
+	toolController.tools[itemId] = nil
+end
+
 function toolController:init()
 	CamController = require(game.ReplicatedStorage.Source.Client.Modules.CamController)
+	CharacterController = require(game.ReplicatedStorage.Source.Client.Modules.CharacterController)
+	CharacterController.spawned:Connect(onCharacterAdded)
+	CharacterController.despawned:Connect(onCharacterRemoving)
 end
 
 function toolController:start()
 	camera = CamController:getCamera()
-	
-	if player.Character then
-		onCharacterAdded(player)
-	end
-	player.CharacterAdded:Connect(onCharacterAdded)
-	player.CharacterRemoving:Connect(onCharacterRemoving)
 end
 
 return toolController

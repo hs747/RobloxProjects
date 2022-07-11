@@ -85,7 +85,7 @@ function overlay:onStatChanged(statName, value)
 		return
 	end
 	-- for now, stats assumed to be values on scale of 0-100
-	WUX.Tween(frame.ValueBar, STAT_BAR_TWEENINFO, {Size = UDim2.new(math.clamp(value/100, 0, 1), 0, 1, 0)}) --frame.ValueBar.Size = UDim2.new(math.clamp(value/100, 0, 1), 0, 1, 0)
+	WUX.Tween(frame.ValueBar, STAT_BAR_TWEENINFO, {Size = UDim2.new(math.clamp(value/100, 0, 1), 0, 1, 0)}, true) --frame.ValueBar.Size = UDim2.new(math.clamp(value/100, 0, 1), 0, 1, 0)
 	frame.ValueLabel.Text = string.format("%i%%", value)
 end
 

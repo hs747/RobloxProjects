@@ -217,11 +217,9 @@ local function initializeSoundSystem(instances)
 			sinceStep += dt * flatSpeed * FOOTSTEP_CONFIG.BasePeriodSpeedModifier
 			if sinceStep > FOOTSTEP_CONFIG.BasePeriod then
 				-- play sound
-				print(sinceStep)
 				local footstepSound = FootstepProvider:getRandomFootstepSound(humanoid.FloorMaterial):Clone()
 				footstepSound.Parent = rootPart
 				footstepSound:Play()
-				print(footstepSound.SoundId)
 				Debris:AddItem(footstepSound, 0.5)
 				sinceStep = 0	
 			end

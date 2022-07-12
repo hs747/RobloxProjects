@@ -161,7 +161,7 @@ local function initializeSoundSystem(instances)
 			end
 		end,
 
-		[Enum.HumanoidStateType.Running] = function()
+		[Enum.HumanoidStateType.Running] = function() 
 			stopPlayingLoopedSounds(sounds.Running)
 			--sounds.Running.Playing = true
 			--playingLoopedSounds[sounds.Running] = true

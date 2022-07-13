@@ -42,6 +42,10 @@ function invManager:start()
 	remoteCharacterInventoryRequestMove.OnServerEvent:Connect(eventWrapInventoryContext(onCharacterInventoryRequestMove))
 end
 
+function invManager:getPlayerInventory(...)
+	return getPlayerInventory(...)
+end
+
 function invManager:onPlayerAdded(player)
 	-- give character inventory to player
 	local inv = Inventory.new()

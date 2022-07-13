@@ -2,7 +2,8 @@
 export type ItemInfo = {
     name: string, -- full length name
     nameShort: string, -- name to be displayed in inventory contexts
-    size: Vector2, -- dimensions item displaces in inventory grids 
+    size: Vector2, -- dimensions item displaces in inventory grids
+    isTool: boolean?,
 }
 
 local items: {[string]: ItemInfo} = {

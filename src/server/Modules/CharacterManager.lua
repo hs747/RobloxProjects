@@ -2,6 +2,7 @@ local characterManager = {}
 
 -- dependencies --
 local RunService = game:GetService("RunService")
+local Signal = require(game.ReplicatedStorage.Source.Shared.Signal)
 
 -- private --
 local MAX_HUNGER = 100
@@ -56,6 +57,9 @@ function characterManager:modifyHealth(character, modifyCallback)
 	humanoid.Health = modifyCallback(humanoid.Health)
 end
 
+characterManager.characterAdded = Signal.new()
+characterManager.characterRemoving = Signal.new()
+
 -- framework methods
 function characterManager:start()
 	lastStatUpdate = os.clock()
@@ -99,8 +103,10 @@ function characterManager:onPlayerAdded(player: Player)
 		stats.Parent = character
 		-- insert into characters list
 		table.insert(characters, character)
+		self.characterAdded:Fire(character, player)
 	end)
 	player.CharacterRemoving:Connect(function(character)
+		self.characterRemoving:Fire(character, player)
 		for i, char in ipairs(characters) do
 			if char == character then
 				table.remove(characters, i)

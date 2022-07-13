@@ -49,14 +49,10 @@ function invManager:onPlayerAdded(player)
 		width = 6,
 		height = 2,
 	})
-	inv:addContainer("Test", {
-		width = 8,
-		height = 3,
-	})
 	inv:addSlot("Equipment")
 	inv:addItem("0001", {
 		id = "0001",
-		item = "TestItemLong",
+		item = "Beans",
 		x = 1,
 		y = 1,
 		r = 0,

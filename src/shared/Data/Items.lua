@@ -15,7 +15,12 @@ local items: {[string]: ItemInfo} = {
         name = "Test Item Long",
         nameShort = "TstItmLng",
         size = Vector2.new(2, 1),
-    }
+    },
+    ["Beans"] = {
+        name = "Beans",
+        nameShort = "Beans",
+        size = Vector2.new(1, 2),
+    },
 }
 
 return items

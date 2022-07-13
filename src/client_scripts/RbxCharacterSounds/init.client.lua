@@ -217,11 +217,15 @@ local function initializeSoundSystem(instances)
 			sinceStep += dt * flatSpeed * FOOTSTEP_CONFIG.BasePeriodSpeedModifier
 			if sinceStep > FOOTSTEP_CONFIG.BasePeriod then
 				-- play sound
-				local footstepSound = FootstepProvider:getRandomFootstepSound(humanoid.FloorMaterial):Clone()
-				footstepSound.Parent = rootPart
-				footstepSound:Play()
-				Debris:AddItem(footstepSound, 0.5)
-				sinceStep = 0	
+				sinceStep = 0
+				
+				local floorMaterial = humanoid.FloorMaterial
+				if not (floorMaterial == Enum.Material.Air) then
+					local footstepSound = FootstepProvider:getRandomFootstepSound(floorMaterial):Clone()
+					footstepSound.Parent = rootPart
+					footstepSound:Play()
+					Debris:AddItem(footstepSound, 0.5)
+				end
 			end
 		end
 	end

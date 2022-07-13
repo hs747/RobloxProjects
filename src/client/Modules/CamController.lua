@@ -12,7 +12,7 @@ function camController:getCamera()
 end
 
 function camController:init()
-	player.CameraMode = Enum.CameraMode.LockFirstPerson
+	--player.CameraMode = Enum.CameraMode.LockFirstPerson
 end
 
 function camController:start()

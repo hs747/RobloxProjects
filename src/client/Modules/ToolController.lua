@@ -43,7 +43,7 @@ local function getFirstPersonRig()
 end
 
 local function updateFirstPersonRig()
-	toolController.firstPersonRig.PrimaryPart.CFrame = camera.CFrame  * CFrame.new(0, 0, -5) -- < debug to confirm location
+	toolController.firstPersonRig.PrimaryPart.CFrame = camera.CFrame  --* CFrame.new(0, 0, -5) -- < debug to confirm location
 end
 
 local function onCharacterAdded(char)

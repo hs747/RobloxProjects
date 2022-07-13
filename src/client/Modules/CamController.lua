@@ -12,7 +12,6 @@ local camera = workspace.CurrentCamera
 
 -- public
 function camController:setFovScale(scalar)
-	print("here pog")
 	TweenService:Create(camera, CAMERA_FOV_TWEEN_INFO, {FieldOfView = CAMERA_BASE_FOV * scalar}):Play()
 end
 
@@ -21,7 +20,7 @@ function camController:getCamera()
 end
 
 function camController:init()
-	--player.CameraMode = Enum.CameraMode.LockFirstPerson
+	player.CameraMode = Enum.CameraMode.LockFirstPerson
 	camera.FieldOfView = CAMERA_BASE_FOV
 end
 

@@ -82,6 +82,8 @@ local function onSpawn()
         if inputState == Enum.UserInputState.Begin then
             InventoryMenu:toggle(function() 
                 Interface:enterMenuMode()
+            end, function() 
+                Interface:enterFirstPersonMode()
             end)
         end
     end, false, Enum.KeyCode.Tab)

@@ -26,18 +26,6 @@ end
 
 -- adds a module script to the list
 function framework:addModule(moduleScript: ModuleScript)
-	-- ignore any module scripts that are already set to be loaded
-	--[[if moduleHash[moduleScript] then
-		return
-	end	
-	local succ, ret = pcall(require, moduleScript)
-	if not succ then
-		warn(string.format("\nFramework: Error requiring module [%s]. Framework start cancelled.", moduleScript.Name))
-		return false
-	end
-	moduleHash[moduleScript] = ret
-	table.insert(moduleList, ret)
-	return true]]
 	if moduleHash[moduleScript] then
 		return
 	end

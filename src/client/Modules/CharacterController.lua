@@ -30,6 +30,9 @@ local VAULT_ANIMATION = AnimationProvider:getAnimationFromAsset(characterAnimati
 local characterSounds = game.ReplicatedStorage.Assets.Sounds.Character
 local VAULT_SOUND = characterSounds.Vault
 
+local RIG_RENDER_BIND = "UpdateFPRig"
+local RIG_MODEL_TEMPL = game.ReplicatedStorage.Assets.FirstPersonRig
+
 local player = Players.LocalPlayer
 
 local characterCleaner: Cleaner.Cleaner
@@ -140,11 +143,47 @@ local function onCharacterStateChanged(_, new)
     humanoidState = new
 end
 
+local function firstPersonRigJoint(part0, part0Att, part1, part1Att, name)
+	local joint = Instance.new("Motor6D")
+	joint.Name = name
+	joint.Part0 = part0
+	joint.Part1 = part1
+	joint.C0 = part0Att.CFrame
+	joint.C1 = part1Att.CFrame
+	joint.Parent = part1
+	return joint
+end
+
+local function getFirstPersonRig()
+	local rig = RIG_MODEL_TEMPL:Clone()
+	rig.Name = player.Name .. "_FirstPersonRig"
+
+	-- create joints
+	firstPersonRigJoint(
+		rig:WaitForChild("Head"), rig.Head:WaitForChild("RightShoulderAtt"), 
+		rig:WaitForChild("RightArm"), rig.RightArm:WaitForChild("RightShoulderAtt"),
+		"RightShoulder")
+	firstPersonRigJoint(
+		rig:WaitForChild("Head"), rig.Head:WaitForChild("LeftShoulderAtt"), 
+		rig:WaitForChild("LeftArm"), rig.LeftArm:WaitForChild("LeftShoulderAtt"),
+		"LeftShoulder")
+
+    -- create animation controller
+    local animController = Instance.new("AnimationController")
+    animController.Parent = rig
+
+	rig.Parent = workspace
+	return rig
+end
+
+local function updateFirstPersonRig()
+	characterController.firstPersonRig.PrimaryPart.CFrame = CamController:getCamera().CFrame  --* CFrame.new(0, 0, -5) -- < debug to confirm location
+end
+
 local function onCharacterAdded(char)
     character = char
-    --InterfaceController:enterFirstPersonMode()
     characterController.character = character
-    characterController.spawned:Fire(character)
+    InterfaceController:enterFirstPersonMode()
 
     characterCleaner = Cleaner.new()
     humanoid = character:WaitForChild("Humanoid")
@@ -152,6 +191,10 @@ local function onCharacterAdded(char)
 
     humanoidState = humanoid:GetState()
     vaultingTarget = nil
+
+    -- load fp rig
+    characterController.firstPersonRig = getFirstPersonRig()
+    RunService:BindToRenderStep(RIG_RENDER_BIND, Enum.RenderPriority.Camera.Value + 1, updateFirstPersonRig)
 
     -- load animations
     local animator: Animator = humanoid:WaitForChild("Animator")
@@ -198,11 +241,14 @@ local function onCharacterAdded(char)
             sprint(false)
         end
     end, false, Enum.KeyCode.LeftShift)
+
+    characterController.spawned:Fire(character)
 end
 
 local function onCharacterRemoving()
     characterController.character = nil
     characterController.despawned:Fire()
+    RunService:UnbindFromRenderStep(RIG_RENDER_BIND)
     characterCleaner:clean()
 end
 
@@ -210,6 +256,17 @@ end
 characterController.despawned = Signal.new()
 characterController.spawned = Signal.new()
 characterController.character = nil
+characterController.firstPersonRig = nil
+
+function characterController:loadThirdPersonAnim()
+    -- get the animator from the current character (maybe should cache)
+    -- load up the animation
+end
+
+function characterController:loadFirstPersonAnim(animation)
+    local animator = characterController.firstPersonRig:WaitForChild("AnimationController")
+    return animator:LoadAnimation(animation)
+end
 
 function characterController:init()
     InterfaceController = require(game.ReplicatedStorage.Source.Client.Modules.InterfaceController)

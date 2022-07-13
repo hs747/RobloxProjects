@@ -14,6 +14,7 @@ local VectorUtil = require(game.ReplicatedStorage.Source.Shared.Util.VectorUtil)
 local AnimationProvider = require(game.ReplicatedStorage.Source.Client.AnimationProvider)
 local Overlay = require(game.ReplicatedStorage.Source.Client.Components.Overlay.Overlay)
 local InterfaceController
+local CamController
 
 -- data dependencies --
 local Tags = require(game.ReplicatedStorage.Source.Shared.Data.Tags)
@@ -43,6 +44,8 @@ local vaultingTarget: BasePart
 local vaultingPoints: {Vector3}
 local vaultingClockStart: number = 0
 local isVaulting = false
+
+local isSprinting = false
 
 local function playCharacterSound(sound: Sound)
     local s = sound:Clone()
@@ -85,6 +88,16 @@ local function vault()
         vaultingTarget.CanCollide = true
         isVaulting = false
     end)
+end
+
+local function sprint(start: boolean)
+    if start then
+        humanoid.WalkSpeed = 20
+        CamController:setFovScale(1.3)
+    else
+        humanoid.WalkSpeed = 16
+        CamController:setFovScale(1)
+    end
 end
 
 -- event callbacks
@@ -178,6 +191,13 @@ local function onCharacterAdded(char)
         end
         return Enum.ContextActionResult.Sink
     end, false, Enum.ContextActionPriority.High.Value + 100, Enum.KeyCode.Space)
+    ContextActionService:BindAction("CharacterSprint", function(_, inputState, inputObj) 
+        if inputState == Enum.UserInputState.Begin then
+            sprint(true)
+        else
+            sprint(false)
+        end
+    end, false, Enum.KeyCode.LeftShift)
 end
 
 local function onCharacterRemoving()
@@ -193,6 +213,7 @@ characterController.character = nil
 
 function characterController:init()
     InterfaceController = require(game.ReplicatedStorage.Source.Client.Modules.InterfaceController)
+    CamController = require(game.ReplicatedStorage.Source.Client.Modules.CamController)
 end
 
 function characterController:start()

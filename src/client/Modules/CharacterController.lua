@@ -23,6 +23,12 @@ local Tags = require(game.ReplicatedStorage.Source.Shared.Data.Tags)
 local VAULT_CAST_DISTANCE = 4.5
 local VAULT_EDGE_BIAS = 5
 local VAULT_PUSH_BIAS = 4
+local VAULT_VALID_STATES = {
+    [Enum.HumanoidStateType.Freefall] = true,
+    [Enum.HumanoidStateType.Jumping] = true,
+    [Enum.HumanoidStateType.Running] = true,
+    [Enum.HumanoidStateType.RunningNoPhysics] = true,
+}
 
 local characterAnimations = game.ReplicatedStorage.Assets.Animations.Character
 local VAULT_ANIMATION = AnimationProvider:getAnimationFromAsset(characterAnimations.Vault)
@@ -113,7 +119,7 @@ local function onCharacterHeartbeat()
     -- vaulting
    if not isVaulting then
         vaultingTarget = nil
-        if humanoidState == Enum.HumanoidStateType.Running then
+        if VAULT_VALID_STATES[humanoidState] then
             local params = RaycastParams.new()
             params.FilterDescendantsInstances = {character}
             params.FilterType = Enum.RaycastFilterType.Blacklist
@@ -125,16 +131,17 @@ local function onCharacterHeartbeat()
 
             if result and result.Instance and result.Instance:IsA("BasePart") and CollectionService:HasTag(result.Instance, Tags.Vaultable) then
                 --VisualDebug.drawSphere(result.Position, 0.5, VisualDebug.color.green)
-                vaultingTarget = result.Instance
-
                 local invertedNormalId = VectorUtil.getNormalIdFromGlobalNormal(result.Instance.CFrame, -result.Normal * VectorUtil.transformVector.flattenToXZ)
-                local edgeTop = (vaultingTarget.Position + vaultingTarget.Size/2) * Vector3.new(0, 1, 0) + result.Position * VectorUtil.transformVector.flattenToXZ
+                local edgeTop = (result.Instance.Position + result.Instance.Size/2) * Vector3.new(0, 1, 0) + result.Position * VectorUtil.transformVector.flattenToXZ
                 local dimensionDirection = result.Instance.CFrame:VectorToWorldSpace(Vector3.fromNormalId(invertedNormalId) * result.Instance.Size)
 
-                vaultingPoints = {
-                    edgeTop + Vector3.new(0, VAULT_EDGE_BIAS, 0),
-                    edgeTop + dimensionDirection + dimensionDirection.Unit * VAULT_PUSH_BIAS,
-                }
+                if edgeTop.Y - result.Position.Y < 10 then
+                    vaultingTarget = result.Instance
+                    vaultingPoints = {
+                        edgeTop + Vector3.new(0, VAULT_EDGE_BIAS, 0),
+                        edgeTop + dimensionDirection + dimensionDirection.Unit * VAULT_PUSH_BIAS,
+                    }
+                end
             end
         end
     end
@@ -223,16 +230,17 @@ local function onCharacterAdded(char)
 
     -- connect inputs
     ContextActionService:BindActionAtPriority("CharacterJump", function(_, inputState, inputObj)
-        if inputState == Enum.UserInputState.Begin and humanoidState == Enum.HumanoidStateType.Running or humanoidState == Enum.HumanoidStateType.RunningNoPhysics then
+        if inputState == Enum.UserInputState.Begin then
             if isVaulting then
                 return
             end
             if vaultingTarget then
-                print("starting vault")
                 vault()
                 return
             end
-            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            if humanoidState == Enum.HumanoidStateType.Running or humanoidState == Enum.HumanoidStateType.RunningNoPhysics then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
         end
         return Enum.ContextActionResult.Sink
     end, false, Enum.ContextActionPriority.High.Value + 100, Enum.KeyCode.Space)
@@ -250,8 +258,10 @@ end
 local function onCharacterRemoving()
     characterController.character = nil
     characterController.despawned:Fire()
-    RunService:UnbindFromRenderStep(RIG_RENDER_BIND)
     characterCleaner:clean()
+    RunService:UnbindFromRenderStep(RIG_RENDER_BIND)
+    ContextActionService:UnbindAction("CharacterJump")
+    ContextActionService:UnbindAction("CharacterSprint")
 end
 
 -- public --

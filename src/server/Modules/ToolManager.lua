@@ -34,8 +34,11 @@ function toolManager:start()
 			self:onEquipped(player, player.Character, itemId)
 		end
 	end)
-	unequipToolRemote.OnServerEvent:Connect(function() 
+	unequipToolRemote.OnServerEvent:Connect(function(player)
 		-- idk
+		if player and player.Character then
+			self:onUnequipped(player, player.Character)
+		end
 	end)
 	CharacterManager.characterRemoving:Connect(function(character, _)
 		self.tools[character] = nil

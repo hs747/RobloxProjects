@@ -113,7 +113,8 @@ end
 
 function itemToolController:unequip(toolData, force)
 	if force then
-		toolController.equipped = nil
+		toolController:unequip(toolData)
+		return
 	end
 	-- stop tracks
 	for _, track in pairs(toolData.tracksRig) do
@@ -153,9 +154,11 @@ function toolController:equip(toolData)
 end
 
 function toolController:unequip(toolData)
+	if self.equipped == toolData then
+		self.equipped = nil
+	end
 	local controller = itemToolController -- fetch later
 	controller:unequip(toolData)
-	self.equipped = nil
 	unequipToolRemote:FireServer(toolData.id)
 end
 

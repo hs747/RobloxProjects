@@ -1,9 +1,12 @@
--- dependencies
+-- dependencies --
 local ContextActionService = game:GetService("ContextActionService")
 local CharacterController
 local ToolController
 
--- public
+-- private --
+local CONSUME_KEYFRAME_MARKER = "Consume"
+
+-- public --
 local itemController = {}
 itemController.__index = itemController
 
@@ -23,7 +26,7 @@ function itemController.load(id, toolInfo)
 		state = "idle",
 		rigTracks = {
 			idle = CharacterController:loadFirstPersonAnim(toolInfo.animations.idleRig),
-		consume = CharacterController:loadFirstPersonAnim(toolInfo.animations.consumeRig),
+			consume = CharacterController:loadFirstPersonAnim(toolInfo.animations.consumeRig),
 		},
 		characterTracks = {
 			idle = CharacterController:loadCharacterAnim(toolInfo.animations.idleCharacter),
@@ -85,7 +88,7 @@ end
 
 function itemController:unequip()
 	for _, track in pairs(self.rigTracks) do
-		track:Stop()	
+		track:Stop()
 	end
 	for _, track in pairs(self.characterTracks) do
 		track:Stop()
@@ -95,8 +98,13 @@ end
 function itemController:consume()
 	if self.state == "idle" then
 		self.state = "consuming"
+		-- as an alternative, this is something i could handle on load
+		local conn = self.rigTracks.consume:GetMarkerReachedSignal(CONSUME_KEYFRAME_MARKER):Connect(function() 
+			CharacterController:playCharacterSound(self.toolInfo.sounds.consume)
+		end)
 		self.rigTracks.consume:Play()
 		task.wait(self.rigTracks.consume.Length)
+		conn:Disconnect()
 		ToolController:unequip(self, true)
 		self.state = "consumed"
 	end

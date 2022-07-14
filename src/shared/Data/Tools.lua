@@ -24,10 +24,13 @@ local tools: {[string]: ToolInfo} = {
 		toolType = "Consumable",
 		model = assetsItems.Beans.Model,
 		animations = {
-			idle = AnimationProvider:getAnimationFromAsset(assetsItems.Beans.Animations.Idle),
-			consume = AnimationProvider:getAnimationFromAsset(assetsItems.Beans.Animations.Consume),
+			idleRig = AnimationProvider:getAnimationFromAsset(assetsItems.Beans.Animations.Idle),
+			consumeRig = AnimationProvider:getAnimationFromAsset(assetsItems.Beans.Animations.Consume),
 			idleCharacter = AnimationProvider:getAnimationFromAsset(assetsItems.Beans.Animations.Idle_Character)
 		},
+		sounds = {
+			consume = assetsItems.Beans.Sounds.Consume,
+		}
 	}
 }
 

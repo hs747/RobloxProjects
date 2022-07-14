@@ -270,6 +270,10 @@ characterController.spawned = Signal.new()
 characterController.character = nil
 characterController.firstPersonRig = nil
 
+function characterController:playCharacterSound(sound)
+    playCharacterSound(sound)
+end
+
 function characterController:loadCharacterAnim(animation)
     return animator:LoadAnimation(animation)
 end

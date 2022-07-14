@@ -5,6 +5,7 @@ local ContextActionService = game:GetService("ContextActionService")
 local RunService = game:GetService("RunService")
 local AnimationProvider = require(game.ReplicatedStorage.Source.Client.AnimationProvider)
 local Networking = require(game.ReplicatedStorage.Source.Shared.Networking)
+local Tools = require(game.ReplicatedStorage.Source.Shared.Data.Tools)
 local CamController
 local CharacterController
 
@@ -29,15 +30,7 @@ local function onCharacterAdded(char)
 	character = char
 	firstPersonRig = CharacterController.firstPersonRig
 	-- test
-	local beanTool= toolController:addTool("TestBeans", {
-		toolType = "Consumable",
-		model = game.ReplicatedStorage.Assets.Items.Beans.Model,
-		animations = {
-			idleRig = AnimationProvider:getAnimationFromAsset(game.ReplicatedStorage.Assets.Items.Beans.Animations.Idle),
-			idleCharacter = AnimationProvider:getAnimationFromAsset(game.ReplicatedStorage.Assets.Items.Beans.Animations.Idle_Character),
-			consumeRig = AnimationProvider:getAnimationFromAsset(game.ReplicatedStorage.Assets.Items.Beans.Animations.Consume),
-		}
-	})
+	local beanTool= toolController:addTool("TestBeans", Tools.Beans)
 	task.wait(0.5)
 	toolController:equip(beanTool)
 end

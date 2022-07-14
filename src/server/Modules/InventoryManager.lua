@@ -54,8 +54,8 @@ function invManager:onPlayerAdded(player)
 		height = 2,
 	})
 	inv:addSlot("Equipment")
-	inv:addItem("0001", {
-		id = "0001",
+	inv:addItem("TestBeans", {
+		id = "TestBeans",
 		item = "Beans",
 		x = 1,
 		y = 1,

@@ -38,6 +38,7 @@ local player = Players.LocalPlayer
 local characterCleaner: Cleaner.Cleaner
 local character: Model
 local humanoid: Humanoid
+local animator: Animator
 local root: BasePart
 local humanoidState: Enum.HumanoidStateType
 
@@ -188,6 +189,7 @@ local function onCharacterAdded(char)
     characterCleaner = Cleaner.new()
     humanoid = character:WaitForChild("Humanoid")
     root = character:WaitForChild("HumanoidRootPart")
+    animator = humanoid:WaitForChild("Animator")
 
     humanoidState = humanoid:GetState()
     vaultingTarget = nil
@@ -258,9 +260,8 @@ characterController.spawned = Signal.new()
 characterController.character = nil
 characterController.firstPersonRig = nil
 
-function characterController:loadThirdPersonAnim()
-    -- get the animator from the current character (maybe should cache)
-    -- load up the animation
+function characterController:loadCharacterAnim(animation)
+    return animator:LoadAnimation(animation)
 end
 
 function characterController:loadFirstPersonAnim(animation)

@@ -31,7 +31,7 @@ end
 function toolManager:start()
 	equipToolRemote.OnServerEvent:Connect(function(player, itemId)
 		if player and player.Character then
-			self:onEquipped(player, player.Character)
+			self:onEquipped(player, player.Character, itemId)
 		end
 	end)
 	unequipToolRemote.OnServerEvent:Connect(function() 
@@ -54,14 +54,13 @@ function toolManager:onEquipped(player, character, itemId)
 	if not item then
 		return
 	end
-	local toolInfo = getToolInfo(item)
+	local toolInfo = getToolInfo(item.item)
 	if not toolInfo then
 		return
 	end
 
 	-- equip the tool
 	local model = toolInfo.model:Clone()
-
 	local handle = model.PrimaryPart
 	for _, part in ipairs(model:GetChildren()) do
 		if not (handle == part) and part:IsA("BasePart") then
@@ -72,12 +71,12 @@ function toolManager:onEquipped(player, character, itemId)
 			weld.Parent = part
 		end
 	end
-	
 	local grip = Instance.new("Motor6D")
 	grip.Name = "Grip"
-	grip.Part0 = character:WaitForChild("UpperTorso")
+	grip.Part0 = character:WaitForChild("Torso")
 	grip.Part1 = handle
 	grip.Parent = handle
+	model.Parent = character
 
 	local tool = {
 		itemId = itemId,
@@ -88,7 +87,13 @@ function toolManager:onEquipped(player, character, itemId)
 end
 
 function toolManager:onUnequipped(player, character)
+	local tool = self.tools[character]
+	if not tool then
+		return
+	end
 
+	tool.model:Destroy()
+	self.tools[character] = nil
 end
 
 return toolManager

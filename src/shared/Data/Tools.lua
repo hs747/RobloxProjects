@@ -26,6 +26,7 @@ local tools: {[string]: ToolInfo} = {
 		animations = {
 			idle = AnimationProvider:getAnimationFromAsset(assetsItems.Beans.Animations.Idle),
 			consume = AnimationProvider:getAnimationFromAsset(assetsItems.Beans.Animations.Consume),
+			idleCharacter = AnimationProvider:getAnimationFromAsset(assetsItems.Beans.Animations.Idle_Character)
 		},
 	}
 }

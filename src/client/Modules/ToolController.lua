@@ -4,12 +4,16 @@ local toolController = {}
 local ContextActionService = game:GetService("ContextActionService")
 local RunService = game:GetService("RunService")
 local AnimationProvider = require(game.ReplicatedStorage.Source.Client.AnimationProvider)
+local Networking = require(game.ReplicatedStorage.Source.Shared.Networking)
 local CamController
 local CharacterController
 
 -- constants
 
 -- private
+local equipToolRemote = Networking.getEvent("Tools/Equip")
+local unequipToolRemote = Networking.getEvent("Tools/Unequip")
+
 local player = game:GetService("Players").LocalPlayer
 local camera
 local character
@@ -23,8 +27,9 @@ local function onCharacterAdded(char)
 		toolType = "Consumable",
 		model = game.ReplicatedStorage.Assets.Items.Beans.Model,
 		animations = {
-			idle = AnimationProvider:getAnimationFromAsset(game.ReplicatedStorage.Assets.Items.Beans.Animations.Idle),
-			consume = AnimationProvider:getAnimationFromAsset(game.ReplicatedStorage.Assets.Items.Beans.Animations.Consume),
+			idleRig = AnimationProvider:getAnimationFromAsset(game.ReplicatedStorage.Assets.Items.Beans.Animations.Idle),
+			idleCharacter = AnimationProvider:getAnimationFromAsset(game.ReplicatedStorage.Assets.Items.Beans.Animations.Idle_Character),
+			consumeRig = AnimationProvider:getAnimationFromAsset(game.ReplicatedStorage.Assets.Items.Beans.Animations.Consume),
 		}
 	})
 	task.wait(0.5)
@@ -43,7 +48,8 @@ function itemToolController:init(id, toolInfo)
 	local toolData = {
 		id = id,
 		toolInfo = toolInfo,
-		tracks = {},
+		tracksRig = {},
+		tracksCharacter = {},
 		model = nil,
 	}
 	return toolData
@@ -51,9 +57,12 @@ end
 
 function itemToolController:load(toolData)
 	-- load animation tracks
-	toolData.tracks = {
-		idle = CharacterController:loadFirstPersonAnim(toolData.toolInfo.animations.idle),
-		consume = CharacterController:loadFirstPersonAnim(toolData.toolInfo.animations.consume),
+	toolData.tracksRig = {
+		idle = CharacterController:loadFirstPersonAnim(toolData.toolInfo.animations.idleRig),
+		consume = CharacterController:loadFirstPersonAnim(toolData.toolInfo.animations.consumeRig),
+	}
+	toolData.tracksCharacter = {
+		idle = CharacterController:loadCharacterAnim(toolData.toolInfo.animations.idleCharacter),
 	}
 end
 
@@ -97,9 +106,9 @@ function itemToolController:equip(toolData)
 			end 
 		end, false, Enum.UserInputType.MouseButton1)
 	end
-	
 
-	toolData.tracks.idle:Play()
+	toolData.tracksRig.idle:Play()
+	toolData.tracksCharacter.idle:Play()
 end
 
 function itemToolController:unequip(toolData, force)
@@ -107,7 +116,10 @@ function itemToolController:unequip(toolData, force)
 		toolController.equipped = nil
 	end
 	-- stop tracks
-	for _, track in pairs(toolData.tracks) do
+	for _, track in pairs(toolData.tracksRig) do
+		track:Stop()
+	end
+	for _, track in pairs(toolData.tracksCharacter) do
 		track:Stop()
 	end
 	-- clear events n shit
@@ -117,9 +129,8 @@ end
 function itemToolController:consume(toolData)
 	if toolData.state == "idle" then
 		toolData.state = "consuming"
-		toolData.tracks.consume:Play()
-		print(toolData.tracks.consume.IsPlaying)
-		task.wait(toolData.tracks.consume.Length)
+		toolData.tracksRig.consume:Play()
+		task.wait(toolData.tracksRig.consume.Length)
 		itemToolController:unequip(toolData, true)
 		toolData.state = "consumed"
 	end
@@ -128,18 +139,24 @@ end
 -- public
 toolController.tools = {}
 toolController.equipped = nil
-toolController.equippedModel = nil
 
 -- TODO: implement keybindings for equipping & unequipping tools
 
 function toolController:equip(toolData)
+	if self.equipped then
+		return
+	end
 	local controller = itemToolController -- fetch later
 	controller:equip(toolData)
+	self.equipped = toolData
+	equipToolRemote:FireServer(toolData.id)
 end
 
 function toolController:unequip(toolData)
 	local controller = itemToolController -- fetch later
 	controller:unequip(toolData)
+	self.equipped = nil
+	unequipToolRemote:FireServer(toolData.id)
 end
 
 function toolController:addTool(itemId, toolInfo)

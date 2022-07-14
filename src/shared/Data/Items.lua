@@ -21,6 +21,7 @@ local items: {[string]: ItemInfo} = {
         name = "Beans",
         nameShort = "Beans",
         size = Vector2.new(1, 2),
+        isTool = true,
     },
 }
 

@@ -5,6 +5,7 @@ local toolManager = {}
 local Networking = require(game.ReplicatedStorage.Source.Shared.Networking)
 local Items = require(game.ReplicatedStorage.Source.Shared.Data.Items)
 local Tools = require(game.ReplicatedStorage.Source.Shared.Data.Tools)
+local Toolbar = require(game.ReplicatedStorage.Source.Client.Components.Toolbar.Toolbar)
 local InventoryManager
 local CharacterManager
 

@@ -18,20 +18,17 @@ function itemController.init()
 end
 
 -- constructs the item controller
-function itemController.load(id, toolInfo)
-	local self = setmetatable({
-		id = id,
-		toolInfo = toolInfo,
-		model = nil,
-		state = "idle",
-		rigTracks = {
-			idle = CharacterController:loadFirstPersonAnim(toolInfo.animations.idleRig),
-			consume = CharacterController:loadFirstPersonAnim(toolInfo.animations.consumeRig),
-		},
-		characterTracks = {
-			idle = CharacterController:loadCharacterAnim(toolInfo.animations.idleCharacter),
-		},
-	}, itemController)
+function itemController.load(id, toolInfo, toolData)
+	local self = setmetatable(toolData, itemController)
+	self.model = nil
+	self.state = "idle"
+	self.rigTracks = {
+		idle = CharacterController:loadFirstPersonAnim(toolInfo.animations.idleRig),
+		consume = CharacterController:loadFirstPersonAnim(toolInfo.animations.consumeRig),
+	}
+	self.characterTracks = {
+		idle = CharacterController:loadCharacterAnim(toolInfo.animations.idleCharacter),
+	}
 	return self
 end
 

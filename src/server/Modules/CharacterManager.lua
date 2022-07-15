@@ -3,8 +3,11 @@ local characterManager = {}
 -- dependencies --
 local RunService = game:GetService("RunService")
 local Signal = require(game.ReplicatedStorage.Source.Shared.Signal)
+local Networking = require(game.ReplicatedStorage.Source.Shared.Networking)
 
 -- private --
+local CAM_ANGLE_ATTRIBUTE = "CameraAngle"
+
 local MAX_HUNGER = 100
 local MAX_THIRST = 100
 local THIRST_DECLINE_BASE = 1 -- unit/second
@@ -16,6 +19,9 @@ local STAT_UPDATE_RATE = 0.5 -- interval between stat updates
 local lastStatUpdate
 
 local characters = {}
+
+local updateCameraAngleRemote = Networking.getEvent("Character/UpdateCameraAngle")
+
 -- public --
 local function addCharacterStat(statFolder, statName, initialValue)
 	local stat = Instance.new("NumberValue")
@@ -113,6 +119,15 @@ function characterManager:onPlayerAdded(player: Player)
 				break
 			end
 		end
+	end)
+
+	updateCameraAngleRemote.OnServerEvent:Connect(function(player, setAngle)
+		local character = player.Character
+		if not character then
+			return
+		end
+		setAngle = math.clamp(setAngle, -math.pi/2, math.pi/2)
+		character:SetAttribute(CAM_ANGLE_ATTRIBUTE, setAngle)
 	end)
 end
 

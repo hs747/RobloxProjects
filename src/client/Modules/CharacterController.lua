@@ -7,6 +7,7 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local Debris = game:GetService("Debris")
 local Players = game:GetService("Players")
+local Networking = require(game.ReplicatedStorage.Source.Shared.Networking)
 local VisualDebug = require(game.ReplicatedStorage.Source.Shared.VisualDebug)
 local Signal = require(game.ReplicatedStorage.Source.Shared.Signal)
 local Cleaner = require(game.ReplicatedStorage.Source.Shared.Cleaner)
@@ -56,6 +57,11 @@ local vaultingClockStart: number = 0
 local isVaulting = false
 
 local isSprinting = false
+
+local CAM_ANGLE_UPDATE_PERIOD = 0.1
+local nextCamAngleUpdate = os.clock()
+
+local updateCameraAngleRemote = Networking.getEvent("Character/UpdateCameraAngle")
 
 local function playCharacterSound(sound: Sound)
     local s = sound:Clone()
@@ -117,7 +123,7 @@ end
 
 local function onCharacterHeartbeat() 
     -- vaulting
-   if not isVaulting then
+    if not isVaulting then
         vaultingTarget = nil
         if VAULT_VALID_STATES[humanoidState] then
             local params = RaycastParams.new()
@@ -144,6 +150,13 @@ local function onCharacterHeartbeat()
                 end
             end
         end
+    end
+
+    -- camera angle replication
+    if os.clock() > nextCamAngleUpdate then
+        nextCamAngleUpdate = os.clock() + CAM_ANGLE_UPDATE_PERIOD
+        local cameraForward = workspace.CurrentCamera.CFrame.LookVector
+        updateCameraAngleRemote:FireServer(math.atan(cameraForward.Y/(math.sqrt(cameraForward.X * cameraForward.X + cameraForward.Z * cameraForward.Z))))
     end
 end
 

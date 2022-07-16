@@ -16,6 +16,9 @@ function gunController.load(id, toolInfo, toolData)
 	self.firstPersonTracks = {}
 	self.thirdPersonTracks = {}
 	self.gunState = "unequipped"
+	self.gunOffsetGoal = CFrame.identity
+	self.gunOffsetTime = 0
+	self.gunOffsetDuration = 0
 	return self
 end
 
@@ -45,10 +48,13 @@ function gunController:equip(character, firstPersonRig)
 	grip.Name = "Grip"
 	grip.Part0 = firstPersonRig.Head
 	grip.Part1 = self.handle
-	grip.C0 = self.toolInfo.offsets.idle
+	grip.C0 = CFrame.identity
 	grip.C1 = CFrame.identity
 	grip.Parent = firstPersonRig
 	self.grip = grip
+
+	-- initial pose tweens
+	self:tweenGunOffset(self.toolInfo.offsets.idle, 0)
 
 	-- parent the model after the next animation step
 	self.gunState = "equipping"
@@ -59,7 +65,10 @@ function gunController:equip(character, firstPersonRig)
 		self.gunState = "idle"
 	end)
 
-	-- handle input
+	-- bind/connect events
+	RunService:BindToRenderStep("GunRenderStep", Enum.RenderPriority.Camera.Value - 1, function(dT)
+		self:onRenderStep(dT)
+	end)
 	ContextActionService:BindAction("GunAim", function(_, userInputState)
 		if userInputState == Enum.UserInputState.Begin then
 			self:onAimingChanged(true)
@@ -67,7 +76,7 @@ function gunController:equip(character, firstPersonRig)
 			self:onAimingChanged(false)
 		end
 	end, false, Enum.UserInputType.MouseButton2)
-	CharacterController.sprintingChanged:Connect(function(isSprinting) 
+	self.sprintConn = CharacterController.sprintingChanged:Connect(function(isSprinting) 
 		self:onSprintingChanged(isSprinting)
 	end)
 end
@@ -75,18 +84,36 @@ end
 function gunController:unequip()
 	self.model:Destroy()
 	-- disconnect
+	RunService:UnbindFromRenderStep("GunRenderStep")
 	ContextActionService:UnbindAction("GunAim")
+	self.sprintConn:Disconnect()
+end
+
+function gunController:onRenderStep(dT)
+	-- update the root offset lerp
+	self.gunOffsetTime = math.clamp(self.gunOffsetTime + dT, 0, self.gunOffsetDuration)
+	self.grip.C0 = self.grip.C0:Lerp(self.gunOffsetGoal, self.gunOffsetTime/self.gunOffsetDuration)
+end
+
+function gunController:tweenGunOffset(offsetCF, time)
+	self.gunOffsetGoal = offsetCF
+	if time == 0 then
+		self.gunOffsetTime = 1
+		self.gunOffsetDuration = 1
+		return
+	end
+	self.gunOffsetTime = 0
+	self.gunOffsetDuration = time
 end
 
 function gunController:onSprintingChanged(isSprinting)
 	if isSprinting then
-		print("is sprinting")
 		if self.state == "aiming" then
 			self:onAimingChanged(false)
 		end
-		self.grip.C0 = self.toolInfo.offsets.sprint
+		self:tweenGunOffset(self.toolInfo.offsets.sprint, 0.6)
 	else
-		self.grip.C0 = self.toolInfo.offsets.idle
+		self:tweenGunOffset(self.toolInfo.offsets.idle, 0.6)
 	end
 end
 
@@ -95,11 +122,11 @@ function gunController:onAimingChanged(isAiming)
 		CharacterController:setSprinting(false)
 		CharacterController.bobScale = 0.1
 		self.gunState = "aiming"
-		self.grip.C0 = self.aimOffset
+		self:tweenGunOffset(self.aimOffset, 0.2)
 	elseif self.gunState == "aiming" and not isAiming then
 		CharacterController.bobScale = 1
 		self.gunState = "idle"
-		self.grip.C0 = self.toolInfo.offsets.idle
+		self:tweenGunOffset(self.toolInfo.offsets.idle, 0.2)
 	end
 end
 

@@ -38,8 +38,8 @@ local tools: {[string]: ToolInfo} = {
 		model = assetsWeapons.AK47.Model,
 		offsets = {
 			-- aiming offset is calculated using the aim part
-			idle = CFrame.new(1.5, -1, -2),--CFrame.new(),
-			sprint = CFrame.new(1.25, -1, -2) * CFrame.Angles(math.rad(-15), math.rad(15), 0),--CFrame.new(),
+			idle = CFrame.new(1.5, -1, -2),
+			sprint = CFrame.new(1.25, -1, -2) * CFrame.Angles(math.rad(-15), math.rad(15), 0),
 		},
 		animations = {
 			idleRig = AnimationProvider:getAnimationFromAsset(assetsWeapons.AK47.Animations.Idle),

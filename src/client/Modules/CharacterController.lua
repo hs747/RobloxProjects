@@ -109,10 +109,12 @@ end
 local function sprint(start: boolean)
     if start then
         humanoid.WalkSpeed = 20
-        CamController:setFovScale(1.3)
+        CamController:setFovScale(1.1)
+        characterController.sprintingChanged:Fire(true)
     else
         humanoid.WalkSpeed = 16
         CamController:setFovScale(1)
+        characterController.sprintingChanged:Fire(false)
     end
 end
 
@@ -278,6 +280,7 @@ local function onCharacterRemoving()
 end
 
 -- public --
+characterController.sprintingChanged = Signal.new()
 characterController.despawned = Signal.new()
 characterController.spawned = Signal.new()
 characterController.character = nil
@@ -296,6 +299,12 @@ function characterController:loadFirstPersonAnim(animation)
     return animator:LoadAnimation(animation)
 end
 
+-- state control
+function characterController:setSprinting(sprinting)
+    sprint(sprinting)
+end
+
+-- framework access
 function characterController:init()
     InterfaceController = require(game.ReplicatedStorage.Source.Client.Modules.InterfaceController)
     CamController = require(game.ReplicatedStorage.Source.Client.Modules.CamController)

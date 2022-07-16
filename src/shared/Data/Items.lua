@@ -23,6 +23,12 @@ local items: {[string]: ItemInfo} = {
         size = Vector2.new(1, 2),
         isTool = true,
     },
+    ["AK47"] = {
+        name = "AK47",
+        nameShort = "AK47",
+        size = Vector2.new(3, 3),
+        isTool = true,
+    },
 }
 
 return items

@@ -15,9 +15,11 @@ local CharacterController
 
 -- sub controllers
 local itemSubController = require(script.Item)
+local gunSubController = require(script.Gun)
 
 local typeSubControllerMap = {
-	["Consumable"] = itemSubController
+	["Consumable"] = itemSubController,
+	["Gun"] = gunSubController,
 }
 
 local slotPositionMap = {
@@ -54,7 +56,8 @@ local function onCharacterAdded(char)
 	end, false, Enum.UserInputType.Keyboard)
 
 	-- test
-	local beanTool= toolController:addTool("TestBeans", Tools.Beans, 1)
+	local beanTool = toolController:addTool("TestBeans", Tools.Beans, 1)
+	local ak47Tool = toolController:addTool("TestAK47", Tools.AK47, 2)
 end
 
 local function onCharacterRemoving()
@@ -124,6 +127,8 @@ function toolController:init()
 	CamController = require(game.ReplicatedStorage.Source.Client.Modules.CamController)
 	CharacterController = require(game.ReplicatedStorage.Source.Client.Modules.CharacterController)
 	itemSubController.init()
+	gunSubController.init()
+
 	CharacterController.spawned:Connect(onCharacterAdded)
 	CharacterController.despawned:Connect(onCharacterRemoving)
 end

@@ -62,6 +62,14 @@ function invManager:onPlayerAdded(player)
 		r = 0,
 		container = "Hands",
 	})
+	inv:addItem("TestAK47", {
+		id = "TestAK47",
+		item = "AK47",
+		x = 3,
+		y = 1,
+		r = 0,
+		container = "Hands",
+	})
 	playerInventories[player] = inv
 	remoteCharacterInventorySet:FireClient(player, inv:serialize())
 end

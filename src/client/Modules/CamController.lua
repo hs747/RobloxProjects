@@ -8,7 +8,7 @@ local camController = {}
 local DEBUG_TOGGLE_THIRD
 
 local CAMERA_BASE_FOV = 70
-local CAMERA_FOV_TWEEN_INFO = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+local CAMERA_FOV_TWEEN_INFO = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera

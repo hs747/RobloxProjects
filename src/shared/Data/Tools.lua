@@ -31,7 +31,21 @@ local tools: {[string]: ToolInfo} = {
 		sounds = {
 			consume = assetsItems.Beans.Sounds.Consume,
 		}
-	}
+	},
+
+	["AK47"] = {
+		toolType = "Gun",
+		model = assetsWeapons.AK47.Model,
+		offsets = {
+			-- aiming offset is calculated using the aim part
+			idle = CFrame.new(1.5, -1, -2),--CFrame.new(),
+			sprint = CFrame.new(1.25, -1, -2) * CFrame.Angles(math.rad(-15), math.rad(15), 0),--CFrame.new(),
+		},
+		animations = {
+			idleRig = AnimationProvider:getAnimationFromAsset(assetsWeapons.AK47.Animations.Idle),
+			equipRig = AnimationProvider:getAnimationFromAsset(assetsWeapons.AK47.Animations.Equip),
+		}
+	},
 }
 
 return tools

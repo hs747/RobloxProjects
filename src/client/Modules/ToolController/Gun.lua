@@ -93,9 +93,11 @@ end
 function gunController:onAimingChanged(isAiming)
 	if not (self.gunState == "aiming") and isAiming then
 		CharacterController:setSprinting(false)
+		CharacterController.bobScale = 0.1
 		self.gunState = "aiming"
 		self.grip.C0 = self.aimOffset
 	elseif self.gunState == "aiming" and not isAiming then
+		CharacterController.bobScale = 1
 		self.gunState = "idle"
 		self.grip.C0 = self.toolInfo.offsets.idle
 	end

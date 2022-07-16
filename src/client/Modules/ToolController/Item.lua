@@ -90,6 +90,7 @@ function itemController:unequip()
 	for _, track in pairs(self.characterTracks) do
 		track:Stop()
 	end
+	self.model:Destroy()
 end
 
 function itemController:consume()

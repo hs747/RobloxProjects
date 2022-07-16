@@ -58,6 +58,19 @@ local isVaulting = false
 
 local isSprinting = false
 
+local BOB_CONFIG = {
+    idleFrequency = 2,
+    idleScale = 0.1,
+    walkFrequency = 1.5,
+    walkScale = 0.15,
+    sprintFrequency = 1,
+    sprintScale = 0.2,
+}
+local BOB_SCALE_LERP_K = 5
+local bobScale = Vector2.new(0, 0)
+local bobTimeV = 0
+local bobTimeH = 0
+
 local CAM_ANGLE_UPDATE_PERIOD = 0.1
 local nextCamAngleUpdate = os.clock()
 
@@ -182,7 +195,7 @@ local function getFirstPersonRig()
 	rig.Name = player.Name .. "_FirstPersonRig"
 
 	-- create joints
-	firstPersonRigJoint(
+	local rootJoint = firstPersonRigJoint(
 		rig:WaitForChild("Head"), rig.Head:WaitForChild("RightShoulderAtt"), 
 		rig:WaitForChild("RightArm"), rig.RightArm:WaitForChild("RightShoulderAtt"),
 		"RightShoulder")
@@ -196,11 +209,34 @@ local function getFirstPersonRig()
     animController.Parent = rig
 
 	rig.Parent = workspace
-	return rig
+	return rig, rootJoint
 end
 
-local function updateFirstPersonRig()
-	characterController.firstPersonRig.PrimaryPart.CFrame = CamController:getCamera().CFrame  --* CFrame.new(0, 0, -5) -- < debug to confirm location
+-- rig bobbing TODO: make the scale config a vector 2
+local function getFirstPersonBob(dT): Vector3
+    local frequencyK = BOB_CONFIG.idleFrequency
+    local scaleK = BOB_CONFIG.idleScale
+    local isMoving = characterController:isMoving()
+    if isMoving and isSprinting then
+        -- sprinting
+        frequencyK = BOB_CONFIG.sprintFrequency
+        scaleK = BOB_CONFIG.sprintScale
+    elseif isMoving then
+        -- walking
+        frequencyK = BOB_CONFIG.walkFrequency
+        scaleK = BOB_CONFIG.walkScale
+    end
+    bobScale = bobScale:Lerp(Vector2.new(scaleK, scaleK), dT * BOB_SCALE_LERP_K)
+    bobTimeH += dT * math.pi / frequencyK
+    bobTimeV += dT * 2 * math.pi / frequencyK
+    local x = math.sin(bobTimeH) * bobScale.X * characterController.bobScale--math.sin(bobTimeH * 2 * math.pi / frequencyK) * scaleK
+    local y = math.sin(bobTimeV) * bobScale.Y * characterController.bobScale--math.sin(bobTimeV * math.pi / frequencyK) * scaleK
+    return Vector3.new(x, y, 0)
+end
+
+local function updateFirstPersonRig(dT)
+    local firstPersonBob = getFirstPersonBob(dT)
+	characterController.firstPersonRoot.CFrame = CamController:getCamera().CFrame * CFrame.new(firstPersonBob) --* CFrame.new(0, 0, -5) -- < debug to confirm location
 end
 
 local function onCharacterAdded(char)
@@ -218,7 +254,9 @@ local function onCharacterAdded(char)
 
     -- load fp rig
     characterController.firstPersonRig = getFirstPersonRig()
+    characterController.firstPersonRoot = characterController.firstPersonRig.PrimaryPart
     RunService:BindToRenderStep(RIG_RENDER_BIND, Enum.RenderPriority.Camera.Value + 1, updateFirstPersonRig)
+    characterCleaner:add(characterController.firstPersonRig)
 
     -- load animations
     local animator: Animator = humanoid:WaitForChild("Animator")
@@ -273,10 +311,11 @@ end
 local function onCharacterRemoving()
     characterController.character = nil
     characterController.despawned:Fire()
-    characterCleaner:clean()
     RunService:UnbindFromRenderStep(RIG_RENDER_BIND)
     ContextActionService:UnbindAction("CharacterJump")
     ContextActionService:UnbindAction("CharacterSprint")
+
+    characterCleaner:clean()
 end
 
 -- public --
@@ -285,7 +324,14 @@ characterController.despawned = Signal.new()
 characterController.spawned = Signal.new()
 characterController.character = nil
 characterController.firstPersonRig = nil
+characterController.bobScale = 1
 
+-- getters
+function characterController:isMoving()
+    return humanoid.MoveDirection.Magnitude > 0.25
+end
+
+-- util
 function characterController:playCharacterSound(sound)
     playCharacterSound(sound)
 end
